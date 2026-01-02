@@ -2,9 +2,10 @@ name: Build
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main, develop, 'claude/**' ]
   pull_request:
     branches: [ main, develop ]
+  workflow_dispatch:  # Allows manual trigger from GitHub UI
 
 jobs:
   build:
