@@ -20,17 +20,16 @@ import de.readeckapp.util.extractUrlAndTitle
 import de.readeckapp.util.isValidUrl
 import de.readeckapp.worker.LoadBookmarksWorker
 import kotlinx.coroutines.CoroutineExceptionHandler
-import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
@@ -93,16 +92,19 @@ class BookmarkListViewModel @Inject constructor(
             initialValue = BookmarkCounts()
         )
 
-    @OptIn(FlowPreview::class)
     private fun observeBookmarksWithSearch() {
         viewModelScope.launch(loadBookmarkExceptionHandler) {
             combine(
                 filterState,
                 searchQuery
-                    .debounce { query -> if (query.isEmpty()) 0L else 300L }
             ) { filter, query ->
                 Pair(filter, query)
             }.collectLatest { (filterState, query) ->
+                // Debounce only for non-empty search queries
+                if (query.isNotEmpty()) {
+                    delay(300)
+                }
+
                 val bookmarksFlow = if (query.isBlank()) {
                     bookmarkRepository.observeBookmarkListItems(
                         type = filterState.type,
