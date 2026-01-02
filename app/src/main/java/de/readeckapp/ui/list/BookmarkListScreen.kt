@@ -13,7 +13,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.Bookmarks
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.Favorite
@@ -43,6 +45,8 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
@@ -86,6 +90,10 @@ fun BookmarkListScreen(navHostController: NavHostController) {
 
     // Collect filter states
     val filterState = viewModel.filterState.collectAsState()
+
+    // Collect search states
+    val searchQuery = viewModel.searchQuery.collectAsState()
+    val isSearchActive = viewModel.isSearchActive.collectAsState()
 
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
@@ -332,15 +340,65 @@ fun BookmarkListScreen(navHostController: NavHostController) {
             snackbarHost = { SnackbarHost(snackbarHostState) },
             topBar = {
                 TopAppBar(
-                    title = { Text(stringResource(id = R.string.bookmarks)) },
-                    navigationIcon = {
-                        IconButton(
-                            onClick = { scope.launch { drawerState.open() } }
-                        ) {
-                            Icon(
-                                Icons.Filled.Menu,
-                                contentDescription = stringResource(id = R.string.menu)
+                    title = {
+                        if (isSearchActive.value) {
+                            TextField(
+                                value = searchQuery.value,
+                                onValueChange = { viewModel.onSearchQueryChange(it) },
+                                placeholder = { Text(stringResource(id = R.string.search_bookmarks)) },
+                                singleLine = true,
+                                colors = TextFieldDefaults.colors(
+                                    focusedContainerColor = MaterialTheme.colorScheme.surface,
+                                    unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                                    focusedIndicatorColor = MaterialTheme.colorScheme.primary,
+                                    unfocusedIndicatorColor = MaterialTheme.colorScheme.outline
+                                ),
+                                modifier = Modifier.fillMaxWidth()
                             )
+                        } else {
+                            Text(stringResource(id = R.string.bookmarks))
+                        }
+                    },
+                    navigationIcon = {
+                        if (isSearchActive.value) {
+                            IconButton(
+                                onClick = { viewModel.onSearchActiveChange(false) }
+                            ) {
+                                Icon(
+                                    Icons.Filled.Clear,
+                                    contentDescription = stringResource(id = R.string.close_search)
+                                )
+                            }
+                        } else {
+                            IconButton(
+                                onClick = { scope.launch { drawerState.open() } }
+                            ) {
+                                Icon(
+                                    Icons.Filled.Menu,
+                                    contentDescription = stringResource(id = R.string.menu)
+                                )
+                            }
+                        }
+                    },
+                    actions = {
+                        if (!isSearchActive.value) {
+                            IconButton(
+                                onClick = { viewModel.onSearchActiveChange(true) }
+                            ) {
+                                Icon(
+                                    Icons.Filled.Search,
+                                    contentDescription = stringResource(id = R.string.search)
+                                )
+                            }
+                        } else if (searchQuery.value.isNotEmpty()) {
+                            IconButton(
+                                onClick = { viewModel.onClearSearch() }
+                            ) {
+                                Icon(
+                                    Icons.Filled.Clear,
+                                    contentDescription = stringResource(id = R.string.clear_search)
+                                )
+                            }
                         }
                     }
                 )

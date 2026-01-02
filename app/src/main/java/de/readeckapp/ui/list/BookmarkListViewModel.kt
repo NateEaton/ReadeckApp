@@ -20,11 +20,14 @@ import de.readeckapp.util.extractUrlAndTitle
 import de.readeckapp.util.isValidUrl
 import de.readeckapp.worker.LoadBookmarksWorker
 import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.map
@@ -50,6 +53,12 @@ class BookmarkListViewModel @Inject constructor(
 
     private val _filterState = MutableStateFlow(FilterState())
     val filterState: StateFlow<FilterState> = _filterState.asStateFlow()
+
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+
+    private val _isSearchActive = MutableStateFlow(false)
+    val isSearchActive: StateFlow<Boolean> = _isSearchActive.asStateFlow()
 
     private val _uiState = MutableStateFlow<UiState>(UiState.Empty(R.string.list_view_empty_not_loaded_yet))
     val uiState: StateFlow<UiState> = _uiState.asStateFlow()
@@ -84,6 +93,49 @@ class BookmarkListViewModel @Inject constructor(
             initialValue = BookmarkCounts()
         )
 
+    @OptIn(FlowPreview::class)
+    private fun observeBookmarksWithSearch() {
+        viewModelScope.launch(loadBookmarkExceptionHandler) {
+            combine(
+                filterState,
+                searchQuery.debounce(300)
+            ) { filter, query ->
+                Pair(filter, query)
+            }.collectLatest { (filterState, query) ->
+                val bookmarksFlow = if (query.isBlank()) {
+                    bookmarkRepository.observeBookmarkListItems(
+                        type = filterState.type,
+                        unread = filterState.unread,
+                        archived = filterState.archived,
+                        favorite = filterState.favorite,
+                        state = Bookmark.State.LOADED
+                    )
+                } else {
+                    bookmarkRepository.searchBookmarkListItems(
+                        searchQuery = query,
+                        type = filterState.type,
+                        unread = filterState.unread,
+                        archived = filterState.archived,
+                        favorite = filterState.favorite,
+                        state = Bookmark.State.LOADED
+                    )
+                }
+
+                bookmarksFlow.collectLatest {
+                    _uiState.value = if (it.isEmpty()) {
+                        if (query.isNotBlank()) {
+                            UiState.Empty(R.string.search_no_results)
+                        } else {
+                            UiState.Empty(R.string.list_view_empty_nothing_to_see)
+                        }
+                    } else {
+                        UiState.Success(bookmarks = it, updateBookmarkState = null)
+                    }
+                }
+            }
+        }
+    }
+
     init {
         savedStateHandle.get<String>("sharedText").takeIf { it != null }?.let {
             val sharedText = it.extractUrlAndTitle()
@@ -101,23 +153,9 @@ class BookmarkListViewModel @Inject constructor(
             )
         }
 
-        viewModelScope.launch(loadBookmarkExceptionHandler) {
-            filterState.collectLatest { filterState ->
-                bookmarkRepository.observeBookmarkListItems(
-                    type = filterState.type,
-                    unread = filterState.unread,
-                    archived = filterState.archived,
-                    favorite = filterState.favorite,
-                    state = Bookmark.State.LOADED
-                ).collectLatest {
-                    _uiState.value = if (it.isEmpty()) {
-                        UiState.Empty(R.string.list_view_empty_nothing_to_see)
-                    } else {
-                        UiState.Success( bookmarks = it, updateBookmarkState = null)
-                    }
-                }
-            }
+        observeBookmarksWithSearch()
 
+        viewModelScope.launch {
             // Check if the initial sync has been performed
             if (!settingsDataStore.isInitialSyncPerformed()) {
                 Timber.d("loadBookmarks")
@@ -189,6 +227,21 @@ class BookmarkListViewModel @Inject constructor(
     fun onClickSettings() {
         Timber.d("onClickSettings")
         _navigationEvent.update { NavigationEvent.NavigateToSettings }
+    }
+
+    fun onSearchQueryChange(query: String) {
+        _searchQuery.value = query
+    }
+
+    fun onSearchActiveChange(active: Boolean) {
+        _isSearchActive.value = active
+        if (!active) {
+            _searchQuery.value = ""
+        }
+    }
+
+    fun onClearSearch() {
+        _searchQuery.value = ""
     }
 
     fun onClickBookmark(bookmarkId: String) {

@@ -114,4 +114,9 @@ other{}
     <string name="list_view_empty_not_loaded_yet">Bookmarks have not been loaded yet.</string>
     <string name="list_view_empty_error_loading_bookmarks">An error has occurred while loading bookmarks.</string>
     <string name="list_view_empty_nothing_to_see">No bookmarks have been found.</string>
+    <string name="search">Search</string>
+    <string name="search_bookmarks">Search bookmarks</string>
+    <string name="search_no_results">No bookmarks match your search.</string>
+    <string name="clear_search">Clear search</string>
+    <string name="close_search">Close search</string>
 </resources>

@@ -22,6 +22,15 @@ interface BookmarkRepository {
         state: Bookmark.State? = null
     ): Flow<List<BookmarkListItem>>
 
+    fun searchBookmarkListItems(
+        searchQuery: String,
+        type: Bookmark.Type? = null,
+        unread: Boolean? = null,
+        archived: Boolean? = null,
+        favorite: Boolean? = null,
+        state: Bookmark.State? = null
+    ): Flow<List<BookmarkListItem>>
+
     suspend fun insertBookmarks(bookmarks: List<Bookmark>)
     suspend fun getBookmarkById(id: String): Bookmark
     fun observeBookmark(id: String): Flow<Bookmark?>
