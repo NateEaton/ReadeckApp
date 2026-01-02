@@ -98,7 +98,8 @@ class BookmarkListViewModel @Inject constructor(
         viewModelScope.launch(loadBookmarkExceptionHandler) {
             combine(
                 filterState,
-                searchQuery.debounce(300)
+                searchQuery
+                    .debounce { query -> if (query.isEmpty()) 0L else 300L }
             ) { filter, query ->
                 Pair(filter, query)
             }.collectLatest { (filterState, query) ->
