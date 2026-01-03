@@ -304,9 +304,11 @@ class BookmarkListViewModelTest {
             )
         )
         val bookmarkFlow = MutableStateFlow(expectedBookmarks)
+        // Type and status filters are mutually exclusive - clicking Unread after Articles
+        // clears the type filter, so only unread=true should be set
         coEvery {
             bookmarkRepository.observeBookmarkListItems(
-                type = Bookmark.Type.Article,
+                type = null,
                 unread = true,
                 archived = null,
                 favorite = null,
@@ -325,7 +327,7 @@ class BookmarkListViewModelTest {
         )
 
         viewModel.onClickArticles()
-        viewModel.onClickUnread()
+        viewModel.onClickUnread()  // This clears type filter due to mutual exclusivity
         advanceUntilIdle()
 
         // Assert success state after filters applied
