@@ -357,13 +357,13 @@ fun BookmarkListScreen(navHostController: NavHostController) {
                             )
                         } else {
                             val titleRes = when {
-                                filterState.value.unread == true -> R.string.unread
-                                filterState.value.archived == true -> R.string.archive
-                                filterState.value.favorite == true -> R.string.favorites
+                                filterState.value.unread == true -> R.string.header_unread
+                                filterState.value.archived == true -> R.string.header_archived
+                                filterState.value.favorite == true -> R.string.header_favorites
                                 filterState.value.type == Bookmark.Type.Article -> R.string.articles
                                 filterState.value.type == Bookmark.Type.Video -> R.string.videos
                                 filterState.value.type == Bookmark.Type.Picture -> R.string.pictures
-                                else -> R.string.all
+                                else -> R.string.header_all
                             }
                             Text(stringResource(id = titleRes))
                         }

@@ -168,22 +168,31 @@ class BookmarkListViewModel @Inject constructor(
 
     // Filter update functions
     private fun setTypeFilter(type: Bookmark.Type?) {
-        _filterState.value = _filterState.value.copy(type = type)
+        // Clear status filters when selecting a type filter
+        _filterState.value = _filterState.value.copy(
+            type = type,
+            unread = null,
+            archived = null,
+            favorite = null
+        )
     }
 
     private fun setUnreadFilter(unread: Boolean?) {
+        // Clear type filter when selecting a status filter
         _filterState.value =
-            _filterState.value.copy(unread = unread, archived = null, favorite = null)
+            _filterState.value.copy(type = null, unread = unread, archived = null, favorite = null)
     }
 
     private fun setArchivedFilter(archived: Boolean?) {
+        // Clear type filter when selecting a status filter
         _filterState.value =
-            _filterState.value.copy(archived = archived, unread = null, favorite = null)
+            _filterState.value.copy(type = null, archived = archived, unread = null, favorite = null)
     }
 
     private fun setFavoriteFilter(favorite: Boolean?) {
+        // Clear type filter when selecting a status filter
         _filterState.value =
-            _filterState.value.copy(favorite = favorite, unread = null, archived = null)
+            _filterState.value.copy(type = null, favorite = favorite, unread = null, archived = null)
     }
 
     // UI event handlers (already present, but need modification)

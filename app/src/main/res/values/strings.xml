@@ -38,6 +38,11 @@ other{}
     <string name="articles">Articles</string>
     <string name="videos">Videos</string>
     <string name="pictures">Pictures</string>
+    <!-- Header titles to match main Readeck app -->
+    <string name="header_all">All Your Bookmarks</string>
+    <string name="header_unread">Unread Bookmarks</string>
+    <string name="header_archived">Archived Bookmarks</string>
+    <string name="header_favorites">Favorite Bookmarks</string>
     <string name="settings">Settings</string>
     <string name="an_error_occurred">An error occurred.</string>
     <string name="no_bookmarks_found">No bookmarks found.</string>
