@@ -356,7 +356,16 @@ fun BookmarkListScreen(navHostController: NavHostController) {
                                 modifier = Modifier.fillMaxWidth()
                             )
                         } else {
-                            Text(stringResource(id = R.string.bookmarks))
+                            val titleRes = when {
+                                filterState.value.unread == true -> R.string.unread
+                                filterState.value.archived == true -> R.string.archive
+                                filterState.value.favorite == true -> R.string.favorites
+                                filterState.value.type == Bookmark.Type.Article -> R.string.articles
+                                filterState.value.type == Bookmark.Type.Video -> R.string.videos
+                                filterState.value.type == Bookmark.Type.Picture -> R.string.pictures
+                                else -> R.string.all
+                            }
+                            Text(stringResource(id = titleRes))
                         }
                     },
                     navigationIcon = {
