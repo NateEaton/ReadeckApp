@@ -26,6 +26,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.map
@@ -92,48 +95,44 @@ class BookmarkListViewModel @Inject constructor(
             initialValue = BookmarkCounts()
         )
 
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
     private fun observeBookmarksWithSearch() {
         viewModelScope.launch(loadBookmarkExceptionHandler) {
-            combine(
-                filterState,
-                searchQuery
-            ) { filter, query ->
+            combine(filterState, searchQuery) { filter, query ->
                 Pair(filter, query)
-            }.collectLatest { (filterState, query) ->
-                // Debounce only for non-empty search queries
-                if (query.isNotEmpty()) {
-                    delay(300)
-                }
-
-                val bookmarksFlow = if (query.isBlank()) {
+            }.flatMapLatest { (currentFilter, query) ->
+                if (query.isBlank()) {
+                    // No delay for empty queries - go directly to repository
                     bookmarkRepository.observeBookmarkListItems(
-                        type = filterState.type,
-                        unread = filterState.unread,
-                        archived = filterState.archived,
-                        favorite = filterState.favorite,
+                        type = currentFilter.type,
+                        unread = currentFilter.unread,
+                        archived = currentFilter.archived,
+                        favorite = currentFilter.favorite,
                         state = Bookmark.State.LOADED
                     )
                 } else {
-                    bookmarkRepository.searchBookmarkListItems(
-                        searchQuery = query,
-                        type = filterState.type,
-                        unread = filterState.unread,
-                        archived = filterState.archived,
-                        favorite = filterState.favorite,
-                        state = Bookmark.State.LOADED
-                    )
-                }
-
-                bookmarksFlow.collectLatest {
-                    _uiState.value = if (it.isEmpty()) {
-                        if (query.isNotBlank()) {
-                            UiState.Empty(R.string.search_no_results)
-                        } else {
-                            UiState.Empty(R.string.list_view_empty_nothing_to_see)
-                        }
-                    } else {
-                        UiState.Success(bookmarks = it, updateBookmarkState = null)
+                    // Debounce search queries with delay inside flow builder
+                    flow {
+                        delay(300)
+                        emitAll(bookmarkRepository.searchBookmarkListItems(
+                            searchQuery = query,
+                            type = currentFilter.type,
+                            unread = currentFilter.unread,
+                            archived = currentFilter.archived,
+                            favorite = currentFilter.favorite,
+                            state = Bookmark.State.LOADED
+                        ))
                     }
+                }
+            }.collectLatest { bookmarks ->
+                _uiState.value = if (bookmarks.isEmpty()) {
+                    if (searchQuery.value.isNotBlank()) {
+                        UiState.Empty(R.string.search_no_results)
+                    } else {
+                        UiState.Empty(R.string.list_view_empty_nothing_to_see)
+                    }
+                } else {
+                    UiState.Success(bookmarks = bookmarks, updateBookmarkState = null)
                 }
             }
         }
