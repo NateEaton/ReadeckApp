@@ -108,17 +108,6 @@ fun BookmarkListScreen(navHostController: NavHostController) {
     val pullToRefreshState = rememberPullToRefreshState()
     val isLoading by viewModel.loadBookmarksIsRunning.collectAsState()
 
-    // Show Labels Dialog if requested
-    if (showLabelsDialog) {
-        LabelsDialog(
-            labels = labelsWithCounts.value,
-            onLabelSelected = { label ->
-                onClickLabel(label)
-            },
-            onDismiss = { showLabelsDialog = false }
-        )
-    }
-
     // UI event handlers (pass filter update functions)
     val onClickAll = { viewModel.onClickAll() }
     val onClickFilterUnread: () -> Unit = { viewModel.onClickUnread() }
@@ -130,6 +119,17 @@ fun BookmarkListScreen(navHostController: NavHostController) {
     val onClickLabel: (String) -> Unit = { label ->
         viewModel.onClickLabel(label)
         scope.launch { drawerState.close() }
+    }
+
+    // Show Labels Dialog if requested
+    if (showLabelsDialog) {
+        LabelsDialog(
+            labels = labelsWithCounts.value,
+            onLabelSelected = { label ->
+                onClickLabel(label)
+            },
+            onDismiss = { showLabelsDialog = false }
+        )
     }
     val onClickSettings: () -> Unit = { viewModel.onClickSettings() }
     val onClickBookmark: (String) -> Unit = { bookmarkId -> viewModel.onClickBookmark(bookmarkId) }
