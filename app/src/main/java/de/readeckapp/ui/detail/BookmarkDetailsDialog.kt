@@ -40,12 +40,10 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import de.readeckapp.R
-import de.readeckapp.domain.model.Bookmark
-import java.time.format.DateTimeFormatter
 
 @Composable
 fun BookmarkDetailsDialog(
-    bookmark: Bookmark,
+    bookmark: BookmarkDetailViewModel.Bookmark,
     onDismissRequest: () -> Unit,
     onLabelsUpdate: (List<String>) -> Unit = {}
 ) {
@@ -296,10 +294,10 @@ private fun LabelChip(
     }
 }
 
-private fun Bookmark.Type.displayName(): String {
+private fun BookmarkDetailViewModel.Bookmark.Type.displayName(): String {
     return when (this) {
-        Bookmark.Type.Article -> "Article"
-        Bookmark.Type.Picture -> "Picture"
-        Bookmark.Type.Video -> "Video"
+        BookmarkDetailViewModel.Bookmark.Type.ARTICLE -> "Article"
+        BookmarkDetailViewModel.Bookmark.Type.PHOTO -> "Photo"
+        BookmarkDetailViewModel.Bookmark.Type.VIDEO -> "Video"
     }
 }

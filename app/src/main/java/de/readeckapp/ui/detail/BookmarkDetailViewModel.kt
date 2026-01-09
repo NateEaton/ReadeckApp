@@ -100,7 +100,12 @@ class BookmarkDetailViewModel @Inject constructor(
                         is de.readeckapp.domain.model.Bookmark.Type.Picture -> Bookmark.Type.PHOTO
                         is de.readeckapp.domain.model.Bookmark.Type.Video -> Bookmark.Type.VIDEO
                     },
-                    articleContent = bookmark.articleContent
+                    articleContent = bookmark.articleContent,
+                    labels = bookmark.labels,
+                    lang = bookmark.lang,
+                    description = bookmark.description,
+                    wordCount = bookmark.wordCount,
+                    readingTime = bookmark.readingTime
                 ),
                 updateBookmarkState = updateState,
                 template = template,
@@ -253,7 +258,12 @@ class BookmarkDetailViewModel @Inject constructor(
         val isArchived: Boolean,
         val isRead: Boolean,
         val type: Type,
-        val articleContent: String?
+        val articleContent: String?,
+        val labels: List<String> = emptyList(),
+        val lang: String = "",
+        val description: String = "",
+        val wordCount: Int? = null,
+        val readingTime: Int? = null
     ) {
         enum class Type {
             ARTICLE, PHOTO, VIDEO
