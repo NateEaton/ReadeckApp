@@ -71,7 +71,6 @@ fun BookmarkCard(
     onClickArchive: (String, Boolean) -> Unit,
     onClickOpenUrl: (String) -> Unit
 ) {
-    var expanded by remember { mutableStateOf(false) }
 
     Card(
         modifier = Modifier
@@ -134,116 +133,73 @@ fun BookmarkCard(
 
                 }
 
-                Row(
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+                // Labels Row (only shown if labels exist)
+                if (bookmark.labels.isNotEmpty()) {
                     Row(
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        if (bookmark.labels.isNotEmpty()) {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_label_24px),
-                                contentDescription = "labels"
-                            )
-                            Spacer(Modifier.width(8.dp))
-                            val labels = bookmark.labels.fold("") { acc, label ->
-                                if (acc.isNotEmpty()) {
-                                    "$acc, $label"
-                                } else {
-                                    label
-                                }
+                        Icon(
+                            painter = painterResource(R.drawable.ic_label_24px),
+                            contentDescription = "labels"
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        val labels = bookmark.labels.fold("") { acc, label ->
+                            if (acc.isNotEmpty()) {
+                                "$acc, $label"
+                            } else {
+                                label
                             }
-                            Text(
-                                text = labels,
-                                style = MaterialTheme.typography.labelLarge,
-                                modifier = Modifier.padding(end = 4.dp),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
                         }
+                        Text(
+                            text = labels,
+                            style = MaterialTheme.typography.labelLarge,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
                     }
-                    Box(
-                        contentAlignment = Alignment.BottomEnd
+                }
+
+                // Action Icons Row
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp),
+                    horizontalArrangement = Arrangement.Start
+                ) {
+                    // Favorite Button
+                    IconButton(
+                        onClick = { onClickFavorite(bookmark.id, !bookmark.isMarked) },
+                        modifier = Modifier.width(48.dp).height(48.dp)
                     ) {
-                        IconButton(
-                            onClick = {
-                                expanded = true
-                            },
-                        ) {
-                            Icon(Icons.Filled.MoreVert, contentDescription = "Actions")
-                        }
-                        DropdownMenu(
-                            expanded = expanded,
-                            onDismissRequest = { expanded = false }
-                        ) {
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.action_favorite)) },
-                                onClick = {
-                                    onClickFavorite(bookmark.id, !bookmark.isMarked)
-                                    expanded = false
-                                },
-                                leadingIcon = {
-                                    Icon(
-                                        imageVector = if (bookmark.isMarked) Icons.Filled.Grade else Icons.Outlined.Grade,
-                                        contentDescription = stringResource(R.string.action_favorite)
-                                    )
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.action_archive)) },
-                                onClick = {
-                                    onClickArchive(bookmark.id, !bookmark.isArchived)
-                                    expanded = false
-                                },
-                                leadingIcon = {
-                                    Icon(
-                                        imageVector = if (bookmark.isArchived) Icons.Filled.Inventory2 else Icons.Outlined.Inventory2,
-                                        contentDescription = stringResource(R.string.action_archive)
-                                    )
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.action_mark_read)) },
-                                onClick = {
-                                    onClickMarkRead(bookmark.id, !bookmark.isRead)
-                                    expanded = false
-                                },
-                                leadingIcon = {
-                                    Icon(
-                                        imageVector = if (bookmark.isRead) Icons.Filled.CheckBox else Icons.Outlined.CheckBoxOutlineBlank,
-                                        contentDescription = stringResource(R.string.action_mark_read)
-                                    )
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.action_share)) },
-                                onClick = {
-                                    onClickShareBookmark(bookmark.url)
-                                    expanded = false
-                                },
-                                leadingIcon = {
-                                    Icon(
-                                        imageVector = Icons.Outlined.Share,
-                                        contentDescription = stringResource(R.string.action_share)
-                                    )
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.action_delete)) },
-                                onClick = {
-                                    onClickDelete(bookmark.id)
-                                    expanded = false
-                                },
-                                leadingIcon = {
-                                    Icon(
-                                        Icons.Filled.Delete,
-                                        contentDescription = stringResource(R.string.action_delete)
-                                    )
-                                }
-                            )
-                        }
+                        Icon(
+                            imageVector = if (bookmark.isMarked) Icons.Filled.Grade else Icons.Outlined.Grade,
+                            contentDescription = stringResource(R.string.action_favorite)
+                        )
+                    }
+
+                    // Archive Button
+                    IconButton(
+                        onClick = { onClickArchive(bookmark.id, !bookmark.isArchived) },
+                        modifier = Modifier.width(48.dp).height(48.dp)
+                    ) {
+                        Icon(
+                            imageVector = if (bookmark.isArchived) Icons.Filled.Inventory2 else Icons.Outlined.Inventory2,
+                            contentDescription = stringResource(R.string.action_archive)
+                        )
+                    }
+
+                    // Delete Button
+                    IconButton(
+                        onClick = { onClickDelete(bookmark.id) },
+                        modifier = Modifier.width(48.dp).height(48.dp)
+                    ) {
+                        Icon(
+                            Icons.Filled.Delete,
+                            contentDescription = stringResource(R.string.action_delete)
+                        )
                     }
                 }
 
