@@ -53,7 +53,7 @@ class BookmarkListViewModel @Inject constructor(
     private val _openUrlEvent = MutableStateFlow<String>("")
     val openUrlEvent = _openUrlEvent.asStateFlow()
 
-    private val _filterState = MutableStateFlow(FilterState())
+    private val _filterState = MutableStateFlow(FilterState(unread = true))
     val filterState: StateFlow<FilterState> = _filterState.asStateFlow()
 
     private val _searchQuery = MutableStateFlow("")

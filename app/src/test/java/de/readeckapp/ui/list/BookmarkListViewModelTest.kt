@@ -553,7 +553,7 @@ class BookmarkListViewModelTest {
             coEvery {
                 bookmarkRepository.observeBookmarkListItems(
                     type = null,
-                    unread = null,
+                    unread = true,
                     archived = null,
                     favorite = null,
                     state = Bookmark.State.LOADED
@@ -621,7 +621,7 @@ class BookmarkListViewModelTest {
             coEvery {
             bookmarkRepository.observeBookmarkListItems(
                     type = null,
-                    unread = null,
+                    unread = true,
                     archived = null,
                     favorite = null,
                     state = Bookmark.State.LOADED
@@ -675,7 +675,7 @@ class BookmarkListViewModelTest {
             coEvery {
                 bookmarkRepository.observeBookmarkListItems(
                     type = null,
-                    unread = null,
+                    unread = true,
                     archived = null,
                     favorite = null,
                     state = Bookmark.State.LOADED
@@ -735,7 +735,7 @@ class BookmarkListViewModelTest {
             coEvery {
                 bookmarkRepository.observeBookmarkListItems(
                     type = null,
-                    unread = null,
+                    unread = true,
                     archived = null,
                     favorite = null,
                     state = Bookmark.State.LOADED
@@ -803,7 +803,7 @@ class BookmarkListViewModelTest {
             coEvery {
                 bookmarkRepository.observeBookmarkListItems(
                     type = null,
-                    unread = null,
+                    unread = true,
                     archived = null,
                     favorite = null,
                     state = Bookmark.State.LOADED
@@ -857,7 +857,7 @@ class BookmarkListViewModelTest {
             coEvery {
                 bookmarkRepository.observeBookmarkListItems(
                     type = null,
-                    unread = null,
+                    unread = true,
                     archived = null,
                     favorite = null,
                     state = Bookmark.State.LOADED
@@ -918,7 +918,7 @@ class BookmarkListViewModelTest {
             coEvery {
                 bookmarkRepository.observeBookmarkListItems(
                     type = null,
-                    unread = null,
+                    unread = true,
                     archived = null,
                     favorite = null,
                     state = Bookmark.State.LOADED
@@ -986,7 +986,7 @@ class BookmarkListViewModelTest {
             coEvery {
                 bookmarkRepository.observeBookmarkListItems(
                     type = null,
-                    unread = null,
+                    unread = true,
                     archived = null,
                     favorite = null,
                     state = Bookmark.State.LOADED
@@ -1040,7 +1040,7 @@ class BookmarkListViewModelTest {
             coEvery {
                 bookmarkRepository.observeBookmarkListItems(
                     type = null,
-                    unread = null,
+                    unread = true,
                     archived = null,
                     favorite = null,
                     state = Bookmark.State.LOADED
