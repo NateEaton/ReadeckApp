@@ -167,31 +167,33 @@ fun BookmarkCard(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 8.dp),
-                    horizontalArrangement = Arrangement.Start
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    // Favorite Button
-                    IconButton(
-                        onClick = { onClickFavorite(bookmark.id, !bookmark.isMarked) },
-                        modifier = Modifier.width(48.dp).height(48.dp)
-                    ) {
-                        Icon(
-                            imageVector = if (bookmark.isMarked) Icons.Filled.Grade else Icons.Outlined.Grade,
-                            contentDescription = stringResource(R.string.action_favorite)
-                        )
+                    Row(horizontalArrangement = Arrangement.Start) {
+                        // Favorite Button
+                        IconButton(
+                            onClick = { onClickFavorite(bookmark.id, !bookmark.isMarked) },
+                            modifier = Modifier.width(48.dp).height(48.dp)
+                        ) {
+                            Icon(
+                                imageVector = if (bookmark.isMarked) Icons.Filled.Grade else Icons.Outlined.Grade,
+                                contentDescription = stringResource(R.string.action_favorite)
+                            )
+                        }
+
+                        // Archive Button
+                        IconButton(
+                            onClick = { onClickArchive(bookmark.id, !bookmark.isArchived) },
+                            modifier = Modifier.width(48.dp).height(48.dp)
+                        ) {
+                            Icon(
+                                imageVector = if (bookmark.isArchived) Icons.Filled.Inventory2 else Icons.Outlined.Inventory2,
+                                contentDescription = stringResource(R.string.action_archive)
+                            )
+                        }
                     }
 
-                    // Archive Button
-                    IconButton(
-                        onClick = { onClickArchive(bookmark.id, !bookmark.isArchived) },
-                        modifier = Modifier.width(48.dp).height(48.dp)
-                    ) {
-                        Icon(
-                            imageVector = if (bookmark.isArchived) Icons.Filled.Inventory2 else Icons.Outlined.Inventory2,
-                            contentDescription = stringResource(R.string.action_archive)
-                        )
-                    }
-
-                    // Delete Button
+                    // Delete Button (right side)
                     IconButton(
                         onClick = { onClickDelete(bookmark.id) },
                         modifier = Modifier.width(48.dp).height(48.dp)
