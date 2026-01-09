@@ -21,8 +21,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.CheckBox
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Grade
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.TextDecrease
@@ -421,6 +423,7 @@ fun BookmarkDetailMenu(
     onClickDecreaseZoomFactor: () -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
+    var showDetailsDialog by remember { mutableStateOf(false) }
 
     Box(
         contentAlignment = Alignment.BottomEnd
@@ -522,7 +525,27 @@ fun BookmarkDetailMenu(
                     )
                 }
             )
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.action_details)) },
+                onClick = {
+                    showDetailsDialog = true
+                    expanded = false
+                },
+                leadingIcon = {
+                    Icon(
+                        Icons.Filled.Info,
+                        contentDescription = stringResource(R.string.action_details)
+                    )
+                }
+            )
         }
+    }
+
+    if (showDetailsDialog) {
+        BookmarkDetailsDialog(
+            bookmark = uiState.bookmark,
+            onDismissRequest = { showDetailsDialog = false }
+        )
     }
 }
 
