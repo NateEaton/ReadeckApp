@@ -267,11 +267,22 @@ class BookmarkRepositoryImpl @Inject constructor(
     override suspend fun updateLabels(bookmarkId: String, labels: List<String>): BookmarkRepository.UpdateResult {
         return withContext(dispatcher) {
             try {
+                // Get the original labels from the database
+                val originalBookmark = getBookmarkById(bookmarkId)
+                val originalLabels = originalBookmark.labels
+
+                // Calculate which labels were added and removed
+                val addedLabels = labels.filter { it !in originalLabels }
+                val removedLabels = originalLabels.filter { it !in labels }
+
+                Timber.d("Label update: added=$addedLabels, removed=$removedLabels")
+
                 val response =
                     readeckApi.editBookmark(
                         id = bookmarkId,
                         body = EditBookmarkDto(
-                            labels = labels
+                            addLabels = addedLabels.takeIf { it.isNotEmpty() },
+                            removeLabels = removedLabels.takeIf { it.isNotEmpty() }
                         )
                     )
                 if (response.isSuccessful) {

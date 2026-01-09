@@ -47,6 +47,7 @@ fun BookmarkDetailsDialog(
     onDismissRequest: () -> Unit,
     onLabelsUpdate: (List<String>) -> Unit = {}
 ) {
+    val originalLabels = bookmark.labels
     var labels by remember { mutableStateOf(bookmark.labels.toMutableList()) }
     var newLabelInput by remember { mutableStateOf("") }
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -55,7 +56,7 @@ fun BookmarkDetailsDialog(
     ) {
         Surface(
             modifier = Modifier
-                .fillMaxWidth(0.9f)
+                .fillMaxWidth()
                 .padding(16.dp),
             shape = RoundedCornerShape(16.dp),
             color = MaterialTheme.colorScheme.surface
