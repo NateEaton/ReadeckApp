@@ -26,8 +26,8 @@ android {
         applicationId = "de.readeckapp"
         minSdk = 24
         targetSdk = 35
-        versionCode = 800
-        versionName = "0.8.0"
+        versionCode = 801
+        versionName = "0.8.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -38,6 +38,12 @@ android {
         }
     }
     signingConfigs {
+        create("debug") {
+            storeFile = file(System.getProperty("user.home") + "/.android/debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
         create("release") {
             val appKeystoreFile = System.getenv()["KEYSTORE"] ?: "none"
             val appKeyAlias = System.getenv()["KEY_ALIAS"]
@@ -68,6 +74,7 @@ android {
             isMinifyEnabled = false
             isShrinkResources = false
             isDebuggable = true
+            signingConfig = signingConfigs.getByName("debug")
         }
         applicationVariants.all {
             outputs.all {
