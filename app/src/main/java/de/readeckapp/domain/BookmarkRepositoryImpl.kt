@@ -478,19 +478,17 @@ class BookmarkRepositoryImpl @Inject constructor(
 
     override suspend fun getAllLabelsWithCounts(): Map<String, Int> =
         withContext(dispatcher) {
-            val labelsJsonList = bookmarkDao.getAllLabels()
+            val labelsStringList = bookmarkDao.getAllLabels()
             val labelCounts = mutableMapOf<String, Int>()
 
-            // Parse each labels JSON array string and count occurrences
-            for (labelsJson in labelsJsonList) {
-                try {
-                    // Use kotlinx.serialization to deserialize the JSON string
-                    val labels = json.decodeFromString<List<String>>(labelsJson)
+            // Parse each labels string and count occurrences
+            for (labelsString in labelsStringList) {
+                if (labelsString.isNotEmpty()) {
+                    // Split by comma to get individual labels
+                    val labels = labelsString.split(",").map { it.trim() }.filter { it.isNotEmpty() }
                     for (label in labels) {
                         labelCounts[label] = (labelCounts[label] ?: 0) + 1
                     }
-                } catch (e: Exception) {
-                    Timber.e(e, "Error parsing labels: $labelsJson")
                 }
             }
 
