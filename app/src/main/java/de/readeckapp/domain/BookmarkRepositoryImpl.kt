@@ -65,7 +65,8 @@ class BookmarkRepositoryImpl @Inject constructor(
         unread: Boolean?,
         archived: Boolean?,
         favorite: Boolean?,
-        state: Bookmark.State?
+        state: Bookmark.State?,
+        label: String?
     ): Flow<List<BookmarkListItem>> {
         return bookmarkDao.getBookmarkListItemsByFilters(
             type = type?.let {
@@ -84,7 +85,8 @@ class BookmarkRepositoryImpl @Inject constructor(
                     Bookmark.State.ERROR -> BookmarkEntity.State.ERROR
                     Bookmark.State.LOADING -> BookmarkEntity.State.LOADING
                 }
-            }
+            },
+            label = label
         ).map { listItems ->
             listItems.map { listItem ->
                 BookmarkListItem(
@@ -473,4 +475,25 @@ class BookmarkRepositoryImpl @Inject constructor(
             }
         }
     }
+
+    override suspend fun getAllLabelsWithCounts(): Map<String, Int> =
+        withContext(dispatcher) {
+            val labelsJsonList = bookmarkDao.getAllLabels()
+            val labelCounts = mutableMapOf<String, Int>()
+
+            // Parse each labels JSON array string and count occurrences
+            for (labelsJson in labelsJsonList) {
+                try {
+                    // Use kotlinx.serialization to deserialize the JSON string
+                    val labels = json.decodeFromString<List<String>>(labelsJson)
+                    for (label in labels) {
+                        labelCounts[label] = (labelCounts[label] ?: 0) + 1
+                    }
+                } catch (e: Exception) {
+                    Timber.e(e, "Error parsing labels: $labelsJson")
+                }
+            }
+
+            labelCounts.toMap()
+        }
 }

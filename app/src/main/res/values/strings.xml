@@ -38,6 +38,7 @@ other{}
     <string name="articles">Articles</string>
     <string name="videos">Videos</string>
     <string name="pictures">Pictures</string>
+    <string name="labels">Labels</string>
     <!-- Header titles to match main Readeck app -->
     <string name="header_all">All Your Bookmarks</string>
     <string name="header_unread">Unread Bookmarks</string>

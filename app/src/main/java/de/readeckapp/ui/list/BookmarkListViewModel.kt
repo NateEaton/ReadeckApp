@@ -68,6 +68,9 @@ class BookmarkListViewModel @Inject constructor(
     private val _shareIntent = MutableStateFlow<Intent?>(null)
     val shareIntent: StateFlow<Intent?> = _shareIntent.asStateFlow()
 
+    private val _labelsWithCounts = MutableStateFlow<Map<String, Int>>(emptyMap())
+    val labelsWithCounts: StateFlow<Map<String, Int>> = _labelsWithCounts.asStateFlow()
+
     private var pendingDeleteJob: kotlinx.coroutines.Job? = null
     private var pendingDeleteId: String? = null
 
@@ -111,7 +114,8 @@ class BookmarkListViewModel @Inject constructor(
                         unread = currentFilter.unread,
                         archived = currentFilter.archived,
                         favorite = currentFilter.favorite,
-                        state = Bookmark.State.LOADED
+                        state = Bookmark.State.LOADED,
+                        label = currentFilter.label
                     )
                 } else {
                     // Debounce search queries with delay inside flow builder
@@ -167,7 +171,20 @@ class BookmarkListViewModel @Inject constructor(
                 loadBookmarks() // Start incremental sync when the ViewModel is created
             }
         }
+
+        // Load labels on initialization
+        loadLabels()
     }
+
+    private fun loadLabels() {
+        viewModelScope.launch {
+            try {
+                val labels = bookmarkRepository.getAllLabelsWithCounts()
+                _labelsWithCounts.value = labels
+            } catch (e: Exception) {
+                Timber.e(e, "Error loading labels")
+            }
+        }
 
     // Filter update functions
     private fun setTypeFilter(type: Bookmark.Type?) {
@@ -196,6 +213,12 @@ class BookmarkListViewModel @Inject constructor(
         // Clear type filter when selecting a status filter
         _filterState.value =
             _filterState.value.copy(type = null, favorite = favorite, unread = null, archived = null)
+    }
+
+    private fun setLabelFilter(label: String?) {
+        // Clear other filters when selecting a label filter
+        _filterState.value =
+            _filterState.value.copy(type = null, unread = null, archived = null, favorite = null, label = label)
     }
 
     // UI event handlers (already present, but need modification)
@@ -236,6 +259,11 @@ class BookmarkListViewModel @Inject constructor(
     fun onClickVideos() {
         Timber.d("onClickVideos")
         setTypeFilter(Bookmark.Type.Video)
+    }
+
+    fun onClickLabel(label: String) {
+        Timber.d("onClickLabel: $label")
+        setLabelFilter(label)
     }
 
     fun onClickSettings() {
@@ -433,7 +461,8 @@ class BookmarkListViewModel @Inject constructor(
         val type: Bookmark.Type? = null,
         val unread: Boolean? = null,
         val archived: Boolean? = null,
-        val favorite: Boolean? = null
+        val favorite: Boolean? = null,
+        val label: String? = null
     )
 
     sealed class UiState {
