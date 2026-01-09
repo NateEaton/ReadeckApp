@@ -51,6 +51,7 @@ fun BookmarkDetailsDialog(
     val keyboardController = LocalSoftwareKeyboardController.current
 
     Scaffold(
+        modifier = Modifier.fillMaxSize(),
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.detail_dialog_title)) },

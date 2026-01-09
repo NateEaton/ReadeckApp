@@ -198,47 +198,62 @@ fun BookmarkDetailScreen(
     onClickDecreaseZoomFactor: () -> Unit,
     onUpdateLabels: (String, List<String>) -> Unit = { _, _ -> }
 ) {
-    Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) },
-        modifier = modifier,
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = uiState.bookmark.title,
-                        overflow = TextOverflow.Ellipsis,
-                        maxLines = 1
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onClickBack) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.back)
+    var showDetailsDialog by remember { mutableStateOf(false) }
+
+    // Show full-screen details dialog instead of overlaying it
+    if (showDetailsDialog) {
+        BookmarkDetailsDialog(
+            bookmark = uiState.bookmark,
+            onDismissRequest = { showDetailsDialog = false },
+            onLabelsUpdate = { newLabels ->
+                onUpdateLabels(uiState.bookmark.bookmarkId, newLabels)
+            }
+        )
+    } else {
+        // Normal detail view
+        Scaffold(
+            snackbarHost = { SnackbarHost(snackbarHostState) },
+            modifier = modifier,
+            topBar = {
+                TopAppBar(
+                    title = {
+                        Text(
+                            text = uiState.bookmark.title,
+                            overflow = TextOverflow.Ellipsis,
+                            maxLines = 1
                         )
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = onClickBack) {
+                            Icon(
+                                Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = stringResource(R.string.back)
+                            )
+                        }
                     }
-                }
-            )
-        },
-        floatingActionButton = {
-            BookmarkDetailMenu(
+                )
+            },
+            floatingActionButton = {
+                BookmarkDetailMenu(
+                    uiState = uiState,
+                    onClickToggleFavorite = onClickToggleFavorite,
+                    onClickToggleArchive = onClickToggleArchive,
+                    onMarkRead = onMarkRead,
+                    onClickShareBookmark = onClickShareBookmark,
+                    onClickDeleteBookmark = onClickDeleteBookmark,
+                    onClickIncreaseZoomFactor = onClickIncreaseZoomFactor,
+                    onClickDecreaseZoomFactor = onClickDecreaseZoomFactor,
+                    onUpdateLabels = onUpdateLabels,
+                    onShowDetails = { showDetailsDialog = true }
+                )
+            }
+        ) { padding ->
+            BookmarkDetailContent(
+                modifier = Modifier.padding(padding),
                 uiState = uiState,
-                onClickToggleFavorite = onClickToggleFavorite,
-                onClickToggleArchive = onClickToggleArchive,
-                onMarkRead = onMarkRead,
-                onClickShareBookmark = onClickShareBookmark,
-                onClickDeleteBookmark = onClickDeleteBookmark,
-                onClickIncreaseZoomFactor = onClickIncreaseZoomFactor,
-                onClickDecreaseZoomFactor = onClickDecreaseZoomFactor,
-                onUpdateLabels = onUpdateLabels
+                onClickOpenUrl = onClickOpenUrl
             )
         }
-    ) { padding ->
-        BookmarkDetailContent(
-            modifier = Modifier.padding(padding),
-            uiState = uiState,
-            onClickOpenUrl = onClickOpenUrl
-        )
     }
 }
 
@@ -425,10 +440,10 @@ fun BookmarkDetailMenu(
     onClickDeleteBookmark: (String) -> Unit,
     onClickIncreaseZoomFactor: () -> Unit,
     onClickDecreaseZoomFactor: () -> Unit,
-    onUpdateLabels: (String, List<String>) -> Unit = { _, _ -> }
+    onUpdateLabels: (String, List<String>) -> Unit = { _, _ -> },
+    onShowDetails: () -> Unit = {}
 ) {
     var expanded by remember { mutableStateOf(false) }
-    var showDetailsDialog by remember { mutableStateOf(false) }
 
     Box(
         contentAlignment = Alignment.BottomEnd
@@ -533,7 +548,7 @@ fun BookmarkDetailMenu(
             DropdownMenuItem(
                 text = { Text(stringResource(R.string.action_details)) },
                 onClick = {
-                    showDetailsDialog = true
+                    onShowDetails()
                     expanded = false
                 },
                 leadingIcon = {
@@ -544,16 +559,6 @@ fun BookmarkDetailMenu(
                 }
             )
         }
-    }
-
-    if (showDetailsDialog) {
-        BookmarkDetailsDialog(
-            bookmark = uiState.bookmark,
-            onDismissRequest = { showDetailsDialog = false },
-            onLabelsUpdate = { newLabels ->
-                onUpdateLabels(uiState.bookmark.bookmarkId, newLabels)
-            }
-        )
     }
 }
 
