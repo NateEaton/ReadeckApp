@@ -185,6 +185,7 @@ class BookmarkListViewModel @Inject constructor(
                 Timber.e(e, "Error loading labels")
             }
         }
+    }
 
     // Filter update functions
     private fun setTypeFilter(type: Bookmark.Type?) {
