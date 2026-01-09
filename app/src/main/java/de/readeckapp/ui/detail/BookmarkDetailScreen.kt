@@ -98,10 +98,28 @@ fun BookmarkDetailScreen(navHostController: NavController, bookmarkId: String?) 
 
     val onClickOpenUrl: (String) -> Unit = { viewModel.onClickOpenUrl(it) }
     val onClickShareBookmark: (String) -> Unit = { url -> viewModel.onClickShareBookmark(url) }
-    val onClickDeleteBookmark: (String) -> Unit = { viewModel.deleteBookmark(it) }
+    val onClickDeleteBookmark: (String) -> Unit = { bookmarkId ->
+        viewModel.deleteBookmark(bookmarkId)
+        // Deletion will happen after 5 second delay for undo
+    }
     val onUpdateLabels: (String, List<String>) -> Unit = { id, labels -> viewModel.onUpdateLabels(id, labels) }
     val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
     val uiState = viewModel.uiState.collectAsState().value
+    val deleteInitiated = viewModel.deleteInitiated.collectAsState().value
+
+    LaunchedEffect(key1 = deleteInitiated) {
+        if (deleteInitiated) {
+            val result = snackbarHostState.showSnackbar(
+                message = "Bookmark deleted",
+                actionLabel = "UNDO",
+                duration = SnackbarDuration.Long // 10 seconds
+            )
+            if (result == androidx.compose.material3.SnackbarResult.ActionPerformed) {
+                viewModel.onCancelDeleteBookmark()
+            }
+        }
+    }
 
     LaunchedEffect(key1 = navigationEvent.value) {
         navigationEvent.value?.let { event ->

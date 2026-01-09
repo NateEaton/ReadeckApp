@@ -112,7 +112,19 @@ fun BookmarkListScreen(navHostController: NavHostController) {
     val onClickFilterVideos: () -> Unit = { viewModel.onClickVideos() }
     val onClickSettings: () -> Unit = { viewModel.onClickSettings() }
     val onClickBookmark: (String) -> Unit = { bookmarkId -> viewModel.onClickBookmark(bookmarkId) }
-    val onClickDelete: (String) -> Unit = { bookmarkId -> viewModel.onDeleteBookmark(bookmarkId) }
+    val onClickDelete: (String) -> Unit = { bookmarkId ->
+        viewModel.onDeleteBookmark(bookmarkId)
+        scope.launch {
+            val result = snackbarHostState.showSnackbar(
+                message = "Bookmark deleted",
+                actionLabel = "UNDO",
+                duration = SnackbarDuration.Long // 10 seconds
+            )
+            if (result == androidx.compose.material3.SnackbarResult.ActionPerformed) {
+                viewModel.onCancelDeleteBookmark()
+            }
+        }
+    }
     val onClickMarkRead: (String, Boolean) -> Unit = { bookmarkId, isRead -> viewModel.onToggleMarkReadBookmark(bookmarkId, isRead) }
     val onClickFavorite: (String, Boolean) -> Unit = { bookmarkId, isFavorite -> viewModel.onToggleFavoriteBookmark(bookmarkId, isFavorite) }
     val onClickArchive: (String, Boolean) -> Unit = { bookmarkId, isArchived -> viewModel.onToggleArchiveBookmark(bookmarkId, isArchived) }

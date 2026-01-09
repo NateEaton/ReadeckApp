@@ -68,6 +68,9 @@ class BookmarkListViewModel @Inject constructor(
     private val _shareIntent = MutableStateFlow<Intent?>(null)
     val shareIntent: StateFlow<Intent?> = _shareIntent.asStateFlow()
 
+    private var pendingDeleteJob: kotlinx.coroutines.Job? = null
+    private var pendingDeleteId: String? = null
+
     val loadBookmarksIsRunning: StateFlow<Boolean> = workManager.getWorkInfosForUniqueWorkFlow(
         LoadBookmarksWorker.UNIQUE_WORK_NAME
     ).map { it.any { it.state == WorkInfo.State.RUNNING}}
@@ -302,9 +305,25 @@ class BookmarkListViewModel @Inject constructor(
     }
 
     fun onDeleteBookmark(bookmarkId: String) {
-        updateBookmark {
-            updateBookmarkUseCase.deleteBookmark(bookmarkId)
+        // Cancel any previous pending delete
+        pendingDeleteJob?.cancel()
+        pendingDeleteId = bookmarkId
+
+        // Schedule the actual deletion after 5 seconds
+        pendingDeleteJob = viewModelScope.launch {
+            delay(5000) // 5 second delay for undo
+            if (pendingDeleteId == bookmarkId) {
+                updateBookmark {
+                    updateBookmarkUseCase.deleteBookmark(bookmarkId)
+                }
+            }
         }
+    }
+
+    fun onCancelDeleteBookmark() {
+        // Cancel the pending deletion
+        pendingDeleteJob?.cancel()
+        pendingDeleteId = null
     }
 
     fun onToggleMarkReadBookmark(bookmarkId: String, isRead: Boolean) {

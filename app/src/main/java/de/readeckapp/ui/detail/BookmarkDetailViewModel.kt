@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
@@ -46,6 +47,11 @@ class BookmarkDetailViewModel @Inject constructor(
 
     private val _shareIntent = MutableStateFlow<Intent?>(null)
     val shareIntent: StateFlow<Intent?> = _shareIntent.asStateFlow()
+
+    private val _deleteInitiated = MutableStateFlow(false)
+    val deleteInitiated: StateFlow<Boolean> = _deleteInitiated.asStateFlow()
+
+    private var pendingDeleteJob: kotlinx.coroutines.Job? = null
 
     private val bookmarkId: String? = savedStateHandle["bookmarkId"]
     private val template: Flow<Template?> = settingsDataStore.themeFlow.map {
@@ -186,7 +192,15 @@ class BookmarkDetailViewModel @Inject constructor(
     }
 
     fun deleteBookmark(bookmarkId: String) {
-        viewModelScope.launch {
+        // Cancel any previous pending delete
+        pendingDeleteJob?.cancel()
+
+        // Signal that a delete has been initiated
+        _deleteInitiated.value = true
+
+        // Schedule the actual deletion after 5 seconds
+        pendingDeleteJob = viewModelScope.launch {
+            delay(5000) // 5 second delay for undo
             val state = when (val result = updateBookmarkUseCase.deleteBookmark(bookmarkId)) {
                 is UpdateBookmarkUseCase.Result.Success -> UpdateBookmarkState.Success
                 is UpdateBookmarkUseCase.Result.GenericError -> UpdateBookmarkState.Error(result.message)
@@ -197,6 +211,12 @@ class BookmarkDetailViewModel @Inject constructor(
             }
             updateState.value = state
         }
+    }
+
+    fun onCancelDeleteBookmark() {
+        // Cancel the pending deletion
+        pendingDeleteJob?.cancel()
+        _deleteInitiated.value = false
     }
 
     fun onClickOpenUrl(url: String){
