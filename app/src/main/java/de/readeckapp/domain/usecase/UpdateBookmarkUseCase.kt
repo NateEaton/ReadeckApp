@@ -37,6 +37,10 @@ class UpdateBookmarkUseCase @Inject constructor(
         ))
     }
 
+    suspend fun updateLabels(bookmarkId: String, labels: List<String>): Result {
+        return handleResult(bookmarkRepository.updateLabels(bookmarkId, labels))
+    }
+
     suspend fun deleteBookmark(bookmarkId: String): Result {
         return handleResult(bookmarkRepository.deleteBookmark(bookmarkId))
     }

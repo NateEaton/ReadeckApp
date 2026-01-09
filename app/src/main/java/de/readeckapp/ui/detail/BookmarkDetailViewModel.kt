@@ -145,6 +145,15 @@ class BookmarkDetailViewModel @Inject constructor(
         }
     }
 
+    fun onUpdateLabels(bookmarkId: String, labels: List<String>) {
+        updateBookmark {
+            updateBookmarkUseCase.updateLabels(
+                bookmarkId = bookmarkId,
+                labels = labels
+            )
+        }
+    }
+
     private fun updateBookmark(update: suspend () -> UpdateBookmarkUseCase.Result) {
         viewModelScope.launch {
             val state = when (val result = update()) {

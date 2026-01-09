@@ -13,20 +13,30 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import de.readeckapp.R
@@ -39,6 +49,9 @@ fun BookmarkDetailsDialog(
     onDismissRequest: () -> Unit,
     onLabelsUpdate: (List<String>) -> Unit = {}
 ) {
+    var labels by remember { mutableStateOf(bookmark.labels.toMutableList()) }
+    var newLabelInput by remember { mutableStateOf("") }
+    val keyboardController = LocalSoftwareKeyboardController.current
     Dialog(
         onDismissRequest = onDismissRequest
     ) {
@@ -126,11 +139,35 @@ fun BookmarkDetailsDialog(
 
                 // Labels Section
                 LabelsSection(
-                    labels = bookmark.labels,
-                    onLabelsUpdate = onLabelsUpdate
+                    labels = labels,
+                    newLabelInput = newLabelInput,
+                    onNewLabelChange = { newLabelInput = it },
+                    onAddLabel = {
+                        if (newLabelInput.isNotBlank() && !labels.contains(newLabelInput)) {
+                            labels.add(newLabelInput)
+                            newLabelInput = ""
+                            keyboardController?.hide()
+                        }
+                    },
+                    onRemoveLabel = { label ->
+                        labels.remove(label)
+                    }
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
+
+                // Save Button
+                Button(
+                    onClick = {
+                        onLabelsUpdate(labels)
+                        onDismissRequest()
+                    },
+                    modifier = Modifier
+                        .align(Alignment.End)
+                        .padding(top = 8.dp)
+                ) {
+                    Text(stringResource(R.string.save))
+                }
             }
         }
     }
@@ -162,7 +199,10 @@ private fun MetadataField(
 @Composable
 private fun LabelsSection(
     labels: List<String>,
-    onLabelsUpdate: (List<String>) -> Unit = {}
+    newLabelInput: String,
+    onNewLabelChange: (String) -> Unit,
+    onAddLabel: () -> Unit,
+    onRemoveLabel: (String) -> Unit
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -174,6 +214,7 @@ private fun LabelsSection(
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
+        // Existing labels
         if (labels.isNotEmpty()) {
             FlowRow(
                 modifier = Modifier.fillMaxWidth(),
@@ -184,18 +225,39 @@ private fun LabelsSection(
                     LabelChip(
                         label = label,
                         onRemove = {
-                            onLabelsUpdate(labels - label)
+                            onRemoveLabel(label)
                         }
                     )
                 }
             }
-        } else {
-            Text(
-                text = "No labels yet",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(vertical = 8.dp)
+        }
+
+        // Input field for new label
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            OutlinedTextField(
+                value = newLabelInput,
+                onValueChange = onNewLabelChange,
+                placeholder = { Text(stringResource(R.string.detail_label_placeholder)) },
+                modifier = Modifier
+                    .weight(1f)
+                    .height(48.dp),
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(
+                    onDone = { onAddLabel() }
+                ),
+                textStyle = MaterialTheme.typography.bodySmall
             )
+            Button(
+                onClick = onAddLabel,
+                modifier = Modifier.height(48.dp)
+            ) {
+                Text(stringResource(R.string.detail_add_label))
+            }
         }
     }
 }
@@ -206,25 +268,30 @@ private fun LabelChip(
     onRemove: () -> Unit = {}
 ) {
     Card(
-        modifier = Modifier
-            .padding(4.dp),
+        modifier = Modifier.padding(4.dp),
         shape = RoundedCornerShape(16.dp)
     ) {
         Row(
             modifier = Modifier
-                .padding(horizontal = 12.dp, vertical = 6.dp),
+                .padding(horizontal = 12.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text(
                 text = label,
-                style = MaterialTheme.typography.labelSmall
+                style = MaterialTheme.typography.labelSmall,
+                modifier = Modifier.weight(1f, fill = false)
             )
-            Text(
-                text = "✕",
-                modifier = Modifier.clickable { onRemove() },
-                style = MaterialTheme.typography.labelSmall
-            )
+            IconButton(
+                onClick = onRemove,
+                modifier = Modifier.size(20.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Close,
+                    contentDescription = "Remove label",
+                    modifier = Modifier.size(16.dp)
+                )
+            }
         }
     }
 }

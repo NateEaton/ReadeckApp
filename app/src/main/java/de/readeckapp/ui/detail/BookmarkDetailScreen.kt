@@ -99,6 +99,7 @@ fun BookmarkDetailScreen(navHostController: NavController, bookmarkId: String?) 
     val onClickOpenUrl: (String) -> Unit = { viewModel.onClickOpenUrl(it) }
     val onClickShareBookmark: (String) -> Unit = { url -> viewModel.onClickShareBookmark(url) }
     val onClickDeleteBookmark: (String) -> Unit = { viewModel.deleteBookmark(it) }
+    val onUpdateLabels: (String, List<String>) -> Unit = { id, labels -> viewModel.onUpdateLabels(id, labels) }
     val snackbarHostState = remember { SnackbarHostState() }
     val uiState = viewModel.uiState.collectAsState().value
 
@@ -153,7 +154,8 @@ fun BookmarkDetailScreen(navHostController: NavController, bookmarkId: String?) 
                 uiState = uiState,
                 onClickOpenUrl = onClickOpenUrl,
                 onClickIncreaseZoomFactor = onClickIncreaseZoomFactor,
-                onClickDecreaseZoomFactor = onClickDecreaseZoomFactor
+                onClickDecreaseZoomFactor = onClickDecreaseZoomFactor,
+                onUpdateLabels = onUpdateLabels
             )
             // Consumes a shareIntent and creates the corresponding share dialog
             ShareBookmarkChooser(
@@ -193,7 +195,8 @@ fun BookmarkDetailScreen(
     onClickOpenUrl: (String) -> Unit,
     onClickShareBookmark: (String) -> Unit,
     onClickIncreaseZoomFactor: () -> Unit,
-    onClickDecreaseZoomFactor: () -> Unit
+    onClickDecreaseZoomFactor: () -> Unit,
+    onUpdateLabels: (String, List<String>) -> Unit = { _, _ -> }
 ) {
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -226,7 +229,8 @@ fun BookmarkDetailScreen(
                 onClickShareBookmark = onClickShareBookmark,
                 onClickDeleteBookmark = onClickDeleteBookmark,
                 onClickIncreaseZoomFactor = onClickIncreaseZoomFactor,
-                onClickDecreaseZoomFactor = onClickDecreaseZoomFactor
+                onClickDecreaseZoomFactor = onClickDecreaseZoomFactor,
+                onUpdateLabels = onUpdateLabels
             )
         }
     ) { padding ->
@@ -420,7 +424,8 @@ fun BookmarkDetailMenu(
     onClickShareBookmark: (String) -> Unit,
     onClickDeleteBookmark: (String) -> Unit,
     onClickIncreaseZoomFactor: () -> Unit,
-    onClickDecreaseZoomFactor: () -> Unit
+    onClickDecreaseZoomFactor: () -> Unit,
+    onUpdateLabels: (String, List<String>) -> Unit = { _, _ -> }
 ) {
     var expanded by remember { mutableStateOf(false) }
     var showDetailsDialog by remember { mutableStateOf(false) }
@@ -544,7 +549,10 @@ fun BookmarkDetailMenu(
     if (showDetailsDialog) {
         BookmarkDetailsDialog(
             bookmark = uiState.bookmark,
-            onDismissRequest = { showDetailsDialog = false }
+            onDismissRequest = { showDetailsDialog = false },
+            onLabelsUpdate = { newLabels ->
+                onUpdateLabels(uiState.bookmark.bookmarkId, newLabels)
+            }
         )
     }
 }
