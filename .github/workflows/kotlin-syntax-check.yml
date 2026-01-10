@@ -1,0 +1,27 @@
+name: Kotlin Syntax Check
+
+on:
+  push:
+    branches: [ "**" ]
+  pull_request:
+    branches: [ "**" ]
+
+jobs:
+  syntax-check:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.x'
+
+    - name: Run Kotlin syntax checker
+      run: python3 scripts/check-kotlin-syntax.py
+
+    - name: Report results
+      if: success()
+      run: echo "✅ All Kotlin files passed syntax validation"
