@@ -110,7 +110,6 @@ fun BookmarkListScreen(navHostController: NavHostController) {
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
-    var showLabelsDialog by remember { mutableStateOf(false) }
     var isEditingLabel by remember { mutableStateOf(false) }
     var editedLabelName by remember { mutableStateOf("") }
     var pendingDeleteLabel by remember { mutableStateOf<String?>(null) }
@@ -173,18 +172,7 @@ fun BookmarkListScreen(navHostController: NavHostController) {
         viewModel.onOpenUrlEventConsumed()
     }
 
-    // Show Labels Dialog as full-screen replacement
-    if (showLabelsDialog) {
-        LabelsDialog(
-            labels = labelsWithCounts.value,
-            onLabelSelected = { label ->
-                onClickLabel(label)
-                showLabelsDialog = false
-            },
-            onDismiss = { showLabelsDialog = false }
-        )
-    } else {
-        ModalNavigationDrawer(
+    ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
             ModalDrawerSheet {
@@ -378,9 +366,9 @@ fun BookmarkListScreen(navHostController: NavHostController) {
                                 }
                             }
                         },
-                        selected = false,
+                        selected = filterState.value.viewingLabelsList || filterState.value.label != null,
                         onClick = {
-                            showLabelsDialog = true
+                            viewModel.onClickLabelsView()
                             scope.launch { drawerState.close() }
                         }
                     )
@@ -421,7 +409,9 @@ fun BookmarkListScreen(navHostController: NavHostController) {
                                 modifier = Modifier.fillMaxWidth()
                             )
                         } else {
-                            if (filterState.value.label != null) {
+                            if (filterState.value.viewingLabelsList) {
+                                Text(stringResource(id = R.string.bookmark_labels))
+                            } else if (filterState.value.label != null) {
                                 if (isEditingLabel) {
                                     TextField(
                                         value = editedLabelName,
@@ -591,17 +581,26 @@ fun BookmarkListScreen(navHostController: NavHostController) {
                     }
                 }
 
-                PullToRefreshBox(
-                    isRefreshing = isLoading,
-                    onRefresh = { viewModel.onPullToRefresh() },
-                    state = pullToRefreshState,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    when (uiState) {
-                    is BookmarkListViewModel.UiState.Empty -> {
-                        EmptyScreen(messageResource = uiState.messageResource)
-                    }
-                    is BookmarkListViewModel.UiState.Success -> {
+                // Show labels list if viewing labels, otherwise show bookmarks list
+                if (filterState.value.viewingLabelsList) {
+                    LabelsListView(
+                        labels = labelsWithCounts.value,
+                        onLabelSelected = { label ->
+                            onClickLabel(label)
+                        }
+                    )
+                } else {
+                    PullToRefreshBox(
+                        isRefreshing = isLoading,
+                        onRefresh = { viewModel.onPullToRefresh() },
+                        state = pullToRefreshState,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        when (uiState) {
+                        is BookmarkListViewModel.UiState.Empty -> {
+                            EmptyScreen(messageResource = uiState.messageResource)
+                        }
+                        is BookmarkListViewModel.UiState.Success -> {
                         LaunchedEffect(key1 = uiState.updateBookmarkState) {
                             uiState.updateBookmarkState?.let { result ->
                                 val message = when (result) {
@@ -635,6 +634,8 @@ fun BookmarkListScreen(navHostController: NavHostController) {
                             intent = viewModel.shareIntent.collectAsState().value,
                             onShareIntentConsumed = { viewModel.onShareIntentConsumed() }
                         )
+                    }
+                }
                     }
                 }
             }
@@ -693,7 +694,6 @@ fun BookmarkListScreen(navHostController: NavHostController) {
             }
         }
     }
-    } // End of else block for showLabelsDialog
 }
 
 @Composable
@@ -791,6 +791,58 @@ fun BookmarkListView(
                 onClickOpenUrl = onClickOpenInBrowser,
                 onClickShareBookmark = onClickShareBookmark
             )
+        }
+    }
+}
+
+@Composable
+fun LabelsListView(
+    modifier: Modifier = Modifier,
+    labels: Map<String, Int>,
+    onLabelSelected: (String) -> Unit
+) {
+    if (labels.isEmpty()) {
+        Column(
+            modifier = modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = stringResource(R.string.list_view_empty_nothing_to_see),
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
+    } else {
+        LazyColumn(
+            modifier = modifier.fillMaxWidth()
+        ) {
+            items(
+                items = labels.entries.sortedBy { it.key }.toList(),
+                key = { it.key }
+            ) { (label, count) ->
+                NavigationDrawerItem(
+                    label = {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(label)
+                            Badge {
+                                Text(count.toString())
+                            }
+                        }
+                    },
+                    selected = false,
+                    onClick = {
+                        onLabelSelected(label)
+                    }
+                )
+            }
         }
     }
 }

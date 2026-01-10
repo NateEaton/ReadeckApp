@@ -201,37 +201,33 @@ class BookmarkListViewModel @Inject constructor(
 
     // Filter update functions
     private fun setTypeFilter(type: Bookmark.Type?) {
-        // Clear status filters when selecting a type filter
-        _filterState.value = _filterState.value.copy(
-            type = type,
-            unread = null,
-            archived = null,
-            favorite = null
-        )
+        // Clear all other filters when selecting a type filter
+        _filterState.value = FilterState(type = type)
     }
 
     private fun setUnreadFilter(unread: Boolean?) {
-        // Clear type filter when selecting a status filter
-        _filterState.value =
-            _filterState.value.copy(type = null, unread = unread, archived = null, favorite = null)
+        // Clear all other filters when selecting a status filter
+        _filterState.value = FilterState(unread = unread)
     }
 
     private fun setArchivedFilter(archived: Boolean?) {
-        // Clear type filter when selecting a status filter
-        _filterState.value =
-            _filterState.value.copy(type = null, archived = archived, unread = null, favorite = null)
+        // Clear all other filters when selecting a status filter
+        _filterState.value = FilterState(archived = archived)
     }
 
     private fun setFavoriteFilter(favorite: Boolean?) {
-        // Clear type filter when selecting a status filter
-        _filterState.value =
-            _filterState.value.copy(type = null, favorite = favorite, unread = null, archived = null)
+        // Clear all other filters when selecting a status filter
+        _filterState.value = FilterState(favorite = favorite)
     }
 
     private fun setLabelFilter(label: String?) {
-        // Clear other filters when selecting a label filter
-        _filterState.value =
-            _filterState.value.copy(type = null, unread = null, archived = null, favorite = null, label = label)
+        // Clear all other filters when selecting a label filter
+        _filterState.value = FilterState(label = label)
+    }
+
+    private fun setLabelsListView() {
+        // Show the labels list view
+        _filterState.value = FilterState(viewingLabelsList = true)
     }
 
     // UI event handlers (already present, but need modification)
@@ -272,6 +268,11 @@ class BookmarkListViewModel @Inject constructor(
     fun onClickVideos() {
         Timber.d("onClickVideos")
         setTypeFilter(Bookmark.Type.Video)
+    }
+
+    fun onClickLabelsView() {
+        Timber.d("onClickLabelsView")
+        setLabelsListView()
     }
 
     fun onClickLabel(label: String) {
@@ -519,7 +520,8 @@ class BookmarkListViewModel @Inject constructor(
         val unread: Boolean? = null,
         val archived: Boolean? = null,
         val favorite: Boolean? = null,
-        val label: String? = null
+        val label: String? = null,
+        val viewingLabelsList: Boolean = false
     )
 
     sealed class UiState {
