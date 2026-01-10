@@ -16,6 +16,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Search
@@ -24,6 +25,7 @@ import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.Favorite
 import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material.icons.outlined.Inventory2
+import androidx.compose.material.icons.outlined.Label
 import androidx.compose.material.icons.outlined.Movie
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.TaskAlt
@@ -65,7 +67,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.ui.platform.LocalContext
@@ -356,7 +360,7 @@ fun BookmarkListScreen(navHostController: NavHostController) {
                             style = Typography.labelLarge,
                             text = stringResource(id = R.string.labels)
                         ) },
-                        icon = { Icon(Icons.Outlined.Bookmarks, contentDescription = null) },
+                        icon = { Icon(Icons.Outlined.Label, contentDescription = null) },
                         badge = {
                             if (labelsWithCounts.value.isNotEmpty()) {
                                 Badge(containerColor = MaterialTheme.colorScheme.secondaryContainer) {
@@ -496,7 +500,7 @@ fun BookmarkListScreen(navHostController: NavHostController) {
                                     )
                                 }
                             }
-                        } else if (!isSearchActive.value) {
+                        } else if (!isSearchActive.value && !filterState.value.viewingLabelsList) {
                             IconButton(
                                 onClick = { viewModel.onSearchActiveChange(true) }
                             ) {
@@ -572,10 +576,16 @@ fun BookmarkListScreen(navHostController: NavHostController) {
                                 }
                             },
                             border = BorderStroke(1.dp, MaterialTheme.colorScheme.error),
+                            shape = RectangleShape,
                             colors = ButtonDefaults.outlinedButtonColors(
                                 contentColor = MaterialTheme.colorScheme.error
                             )
                         ) {
+                            Icon(
+                                Icons.Filled.Delete,
+                                contentDescription = null,
+                                modifier = Modifier.padding(end = 4.dp)
+                            )
                             Text(stringResource(id = R.string.delete_label))
                         }
                     }
@@ -822,6 +832,13 @@ fun LabelsListView(
                 key = { it.key }
             ) { (label, count) ->
                 NavigationDrawerItem(
+                    modifier = Modifier
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                        .border(
+                            width = 1.dp,
+                            color = MaterialTheme.colorScheme.outlineVariant,
+                            shape = MaterialTheme.shapes.medium
+                        ),
                     label = {
                         Row(
                             modifier = Modifier
@@ -831,7 +848,9 @@ fun LabelsListView(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(label)
-                            Badge {
+                            Badge(
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant
+                            ) {
                                 Text(count.toString())
                             }
                         }
