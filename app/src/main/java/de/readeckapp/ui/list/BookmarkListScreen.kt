@@ -540,6 +540,9 @@ fun BookmarkListScreen(navHostController: NavHostController) {
             Column(modifier = Modifier.padding(padding)) {
                 // Show Delete button when a label is selected
                 if (filterState.value.label != null && !isEditingLabel) {
+                    val labelDeletedMessageFormat = stringResource(R.string.label_deleted)
+                    val currentLabel = filterState.value.label!!
+
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -552,12 +555,12 @@ fun BookmarkListScreen(navHostController: NavHostController) {
                                 deleteLabelJob?.cancel()
 
                                 // Set pending delete
-                                pendingDeleteLabel = filterState.value.label
+                                pendingDeleteLabel = currentLabel
 
                                 // Show snackbar with undo option
                                 scope.launch {
                                     val result = snackbarHostState.showSnackbar(
-                                        message = stringResource(R.string.label_deleted, filterState.value.label!!),
+                                        message = labelDeletedMessageFormat.format(currentLabel),
                                         actionLabel = "UNDO",
                                         duration = SnackbarDuration.Long
                                     )
@@ -572,8 +575,8 @@ fun BookmarkListScreen(navHostController: NavHostController) {
                                 // Schedule the actual deletion after 5 seconds
                                 deleteLabelJob = scope.launch {
                                     kotlinx.coroutines.delay(5000)
-                                    if (pendingDeleteLabel == filterState.value.label) {
-                                        viewModel.onDeleteLabel(filterState.value.label!!)
+                                    if (pendingDeleteLabel == currentLabel) {
+                                        viewModel.onDeleteLabel(currentLabel)
                                         pendingDeleteLabel = null
                                     }
                                 }

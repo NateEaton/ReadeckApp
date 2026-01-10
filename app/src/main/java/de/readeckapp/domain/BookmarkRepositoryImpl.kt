@@ -515,15 +515,12 @@ class BookmarkRepositoryImpl @Inject constructor(
                     val updatedBookmark = bookmark.copy(labels = updatedLabels)
                     bookmarkDao.insertBookmark(updatedBookmark)
 
-                    // Update on server
-                    val response = readeckApi.updateBookmark(
-                        bookmarkId = bookmark.id,
-                        editBookmarkDto = EditBookmarkDto(
-                            url = null,
-                            title = null,
-                            isMarked = null,
-                            isArchived = null,
-                            labels = updatedLabels
+                    // Update on server - use addLabels and removeLabels
+                    val response = readeckApi.editBookmark(
+                        id = bookmark.id,
+                        body = EditBookmarkDto(
+                            addLabels = listOf(newLabel),
+                            removeLabels = listOf(oldLabel)
                         )
                     )
 
@@ -563,15 +560,11 @@ class BookmarkRepositoryImpl @Inject constructor(
                     val updatedBookmark = bookmark.copy(labels = updatedLabels)
                     bookmarkDao.insertBookmark(updatedBookmark)
 
-                    // Update on server
-                    val response = readeckApi.updateBookmark(
-                        bookmarkId = bookmark.id,
-                        editBookmarkDto = EditBookmarkDto(
-                            url = null,
-                            title = null,
-                            isMarked = null,
-                            isArchived = null,
-                            labels = updatedLabels
+                    // Update on server - use removeLabels
+                    val response = readeckApi.editBookmark(
+                        id = bookmark.id,
+                        body = EditBookmarkDto(
+                            removeLabels = listOf(label)
                         )
                     )
 
