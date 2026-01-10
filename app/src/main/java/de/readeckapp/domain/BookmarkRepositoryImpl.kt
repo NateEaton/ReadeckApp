@@ -269,9 +269,9 @@ class BookmarkRepositoryImpl @Inject constructor(
     override suspend fun updateLabels(bookmarkId: String, labels: List<String>): BookmarkRepository.UpdateResult {
         return withContext(dispatcher) {
             try {
-                // Get the original labels from the database
-                val originalBookmark = getBookmarkById(bookmarkId)
-                val originalLabels = originalBookmark.labels
+                // Get the original bookmark entity from the database
+                val originalBookmarkEntity = bookmarkDao.getBookmarkById(bookmarkId)
+                val originalLabels = originalBookmarkEntity.labels
 
                 // Calculate which labels were added and removed
                 val addedLabels = labels.filter { it !in originalLabels }
@@ -290,8 +290,8 @@ class BookmarkRepositoryImpl @Inject constructor(
                 if (response.isSuccessful) {
                     Timber.i("Update Labels successful")
                     // Update the local database with the new labels
-                    val updatedBookmark = originalBookmark.copy(labels = labels)
-                    bookmarkDao.insertBookmark(updatedBookmark.toEntity())
+                    val updatedBookmark = originalBookmarkEntity.copy(labels = labels)
+                    bookmarkDao.insertBookmark(updatedBookmark)
                     BookmarkRepository.UpdateResult.Success
                 } else {
                     val code = response.code()
