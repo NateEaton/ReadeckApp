@@ -158,7 +158,8 @@ class BookmarkListViewModel @Inject constructor(
                 title = sharedText?.title ?: "",
                 url = sharedText?.url ?: "",
                 urlError = urlError,
-                isCreateEnabled = urlError == null
+                isCreateEnabled = urlError == null,
+                labels = emptyList()
             )
         }
 
