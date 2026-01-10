@@ -576,9 +576,9 @@ fun BookmarkListScreen(navHostController: NavHostController) {
                                     }
                                 }
 
-                                // Schedule the actual deletion after 5 seconds
+                                // Schedule the actual deletion after 10 seconds
                                 deleteLabelJob = scope.launch {
-                                    kotlinx.coroutines.delay(5000)
+                                    kotlinx.coroutines.delay(10000)
                                     if (pendingDeleteLabel == currentLabel) {
                                         viewModel.onDeleteLabel(currentLabel)
                                         pendingDeleteLabel = null

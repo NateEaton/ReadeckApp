@@ -68,8 +68,12 @@ class BookmarkListViewModel @Inject constructor(
     private val _shareIntent = MutableStateFlow<Intent?>(null)
     val shareIntent: StateFlow<Intent?> = _shareIntent.asStateFlow()
 
-    private val _labelsWithCounts = MutableStateFlow<Map<String, Int>>(emptyMap())
-    val labelsWithCounts: StateFlow<Map<String, Int>> = _labelsWithCounts.asStateFlow()
+    val labelsWithCounts: StateFlow<Map<String, Int>> = bookmarkRepository.observeAllLabelsWithCounts()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyMap()
+        )
 
     private var pendingDeleteJob: kotlinx.coroutines.Job? = null
     private var pendingDeleteId: String? = null
@@ -172,32 +176,6 @@ class BookmarkListViewModel @Inject constructor(
                 loadBookmarks() // Start incremental sync when the ViewModel is created
             }
         }
-
-        // Load labels on initialization
-        loadLabels()
-
-        // Reload labels when bookmarks change
-        viewModelScope.launch {
-            bookmarkCounts.collect { counts ->
-                // Reload labels whenever bookmark counts change
-                loadLabels()
-            }
-        }
-    }
-
-    private fun loadLabels() {
-        viewModelScope.launch {
-            try {
-                val labels = bookmarkRepository.getAllLabelsWithCounts()
-                _labelsWithCounts.value = labels
-            } catch (e: Exception) {
-                Timber.e(e, "Error loading labels")
-            }
-        }
-    }
-
-    fun reloadLabels() {
-        loadLabels()
     }
 
     // Filter update functions
@@ -396,9 +374,9 @@ class BookmarkListViewModel @Inject constructor(
         pendingDeleteJob?.cancel()
         pendingDeleteId = bookmarkId
 
-        // Schedule the actual deletion after 5 seconds
+        // Schedule the actual deletion after 10 seconds
         pendingDeleteJob = viewModelScope.launch {
-            delay(5000) // 5 second delay for undo
+            delay(10000) // 10 second delay to match Snackbar duration
             if (pendingDeleteId == bookmarkId) {
                 updateBookmark {
                     updateBookmarkUseCase.deleteBookmark(bookmarkId)

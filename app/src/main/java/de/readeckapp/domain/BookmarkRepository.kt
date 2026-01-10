@@ -45,6 +45,7 @@ interface BookmarkRepository {
     suspend fun performFullSync(): SyncResult
     fun observeAllBookmarkCounts(): Flow<BookmarkCounts>
     suspend fun getAllLabelsWithCounts(): Map<String, Int>
+    fun observeAllLabelsWithCounts(): Flow<Map<String, Int>>
     sealed class UpdateResult {
         data object Success: UpdateResult()
         data class Error(val errorMessage: String, val code: Int? = null, val ex: Exception? = null): UpdateResult()

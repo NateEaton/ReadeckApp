@@ -303,4 +303,11 @@ interface BookmarkDao {
         """
     )
     suspend fun getAllLabels(): List<String>
+
+    @Query(
+        """
+        SELECT labels FROM bookmarks WHERE state = 0 AND labels != '' AND labels IS NOT NULL
+        """
+    )
+    fun observeAllLabels(): Flow<List<String>>
 }

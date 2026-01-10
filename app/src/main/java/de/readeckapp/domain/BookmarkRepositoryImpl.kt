@@ -498,6 +498,24 @@ class BookmarkRepositoryImpl @Inject constructor(
             labelCounts.toMap()
         }
 
+    override fun observeAllLabelsWithCounts(): Flow<Map<String, Int>> =
+        bookmarkDao.observeAllLabels().map { labelsStringList ->
+            val labelCounts = mutableMapOf<String, Int>()
+
+            // Parse each labels string and count occurrences
+            for (labelsString in labelsStringList) {
+                if (labelsString.isNotEmpty()) {
+                    // Split by comma to get individual labels
+                    val labels = labelsString.split(",").map { it.trim() }.filter { it.isNotEmpty() }
+                    for (label in labels) {
+                        labelCounts[label] = (labelCounts[label] ?: 0) + 1
+                    }
+                }
+            }
+
+            labelCounts.toMap()
+        }
+
     override suspend fun renameLabel(oldLabel: String, newLabel: String): BookmarkRepository.UpdateResult =
         withContext(dispatcher) {
             try {
