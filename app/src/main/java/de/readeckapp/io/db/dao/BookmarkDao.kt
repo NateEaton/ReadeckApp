@@ -190,7 +190,7 @@ interface BookmarkDao {
 
             label?.let {
                 append(" AND labels LIKE ?")
-                args.add("%\"$it\"%")
+                args.add("%$it%")
             }
 
             append(" ORDER BY created DESC")
