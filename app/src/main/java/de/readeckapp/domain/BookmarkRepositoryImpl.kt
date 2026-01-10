@@ -182,8 +182,8 @@ class BookmarkRepositoryImpl @Inject constructor(
         bookmarkDao.deleteAllBookmarks()
     }
 
-    override suspend fun createBookmark(title: String, url: String): String {
-        val createBookmarkDto = CreateBookmarkDto(title = title, url = url)
+    override suspend fun createBookmark(title: String, url: String, labels: List<String>): String {
+        val createBookmarkDto = CreateBookmarkDto(labels = labels, title = title, url = url)
         val response = readeckApi.createBookmark(createBookmarkDto)
         if (response.isSuccessful) {
             return response.headers()[ReadeckApi.Header.BOOKMARK_ID]!!
@@ -269,9 +269,9 @@ class BookmarkRepositoryImpl @Inject constructor(
     override suspend fun updateLabels(bookmarkId: String, labels: List<String>): BookmarkRepository.UpdateResult {
         return withContext(dispatcher) {
             try {
-                // Get the original labels from the database
-                val originalBookmark = getBookmarkById(bookmarkId)
-                val originalLabels = originalBookmark.labels
+                // Get the original bookmark entity from the database
+                val originalBookmarkEntity = bookmarkDao.getBookmarkById(bookmarkId)
+                val originalLabels = originalBookmarkEntity.labels
 
                 // Calculate which labels were added and removed
                 val addedLabels = labels.filter { it !in originalLabels }
@@ -289,6 +289,9 @@ class BookmarkRepositoryImpl @Inject constructor(
                     )
                 if (response.isSuccessful) {
                     Timber.i("Update Labels successful")
+                    // Update the local database with the new labels
+                    val updatedBookmark = originalBookmarkEntity.copy(labels = labels)
+                    bookmarkDao.insertBookmark(updatedBookmark)
                     BookmarkRepository.UpdateResult.Success
                 } else {
                     val code = response.code()
@@ -493,5 +496,114 @@ class BookmarkRepositoryImpl @Inject constructor(
             }
 
             labelCounts.toMap()
+        }
+
+    override fun observeAllLabelsWithCounts(): Flow<Map<String, Int>> =
+        bookmarkDao.observeAllLabels().map { labelsStringList ->
+            val labelCounts = mutableMapOf<String, Int>()
+
+            // Parse each labels string and count occurrences
+            for (labelsString in labelsStringList) {
+                if (labelsString.isNotEmpty()) {
+                    // Split by comma to get individual labels
+                    val labels = labelsString.split(",").map { it.trim() }.filter { it.isNotEmpty() }
+                    for (label in labels) {
+                        labelCounts[label] = (labelCounts[label] ?: 0) + 1
+                    }
+                }
+            }
+
+            labelCounts.toMap()
+        }
+
+    override suspend fun renameLabel(oldLabel: String, newLabel: String): BookmarkRepository.UpdateResult =
+        withContext(dispatcher) {
+            try {
+                // Get all bookmarks with the old label
+                val bookmarksWithLabel = bookmarkDao.getAllBookmarksWithContent()
+                    .filter { bookmark ->
+                        bookmark.bookmark.labels.contains(oldLabel)
+                    }
+
+                // Update each bookmark by replacing the old label with the new one
+                for (bookmarkWithContent in bookmarksWithLabel) {
+                    val bookmark = bookmarkWithContent.bookmark
+                    val updatedLabels = bookmark.labels.map { label ->
+                        if (label == oldLabel) newLabel else label
+                    }
+
+                    // Update locally
+                    val updatedBookmark = bookmark.copy(labels = updatedLabels)
+                    bookmarkDao.insertBookmark(updatedBookmark)
+
+                    // Update on server - use addLabels and removeLabels
+                    val response = readeckApi.editBookmark(
+                        id = bookmark.id,
+                        body = EditBookmarkDto(
+                            addLabels = listOf(newLabel),
+                            removeLabels = listOf(oldLabel)
+                        )
+                    )
+
+                    if (!response.isSuccessful) {
+                        return@withContext BookmarkRepository.UpdateResult.Error(
+                            errorMessage = "Failed to rename label on server",
+                            code = response.code()
+                        )
+                    }
+                }
+
+                BookmarkRepository.UpdateResult.Success
+            } catch (e: Exception) {
+                Timber.e(e, "Error renaming label")
+                BookmarkRepository.UpdateResult.NetworkError(
+                    errorMessage = "Network error while renaming label",
+                    ex = e
+                )
+            }
+        }
+
+    override suspend fun deleteLabel(label: String): BookmarkRepository.UpdateResult =
+        withContext(dispatcher) {
+            try {
+                // Get all bookmarks with the label
+                val bookmarksWithLabel = bookmarkDao.getAllBookmarksWithContent()
+                    .filter { bookmark ->
+                        bookmark.bookmark.labels.contains(label)
+                    }
+
+                // Update each bookmark by removing the label
+                for (bookmarkWithContent in bookmarksWithLabel) {
+                    val bookmark = bookmarkWithContent.bookmark
+                    val updatedLabels = bookmark.labels.filter { it != label }
+
+                    // Update locally
+                    val updatedBookmark = bookmark.copy(labels = updatedLabels)
+                    bookmarkDao.insertBookmark(updatedBookmark)
+
+                    // Update on server - use removeLabels
+                    val response = readeckApi.editBookmark(
+                        id = bookmark.id,
+                        body = EditBookmarkDto(
+                            removeLabels = listOf(label)
+                        )
+                    )
+
+                    if (!response.isSuccessful) {
+                        return@withContext BookmarkRepository.UpdateResult.Error(
+                            errorMessage = "Failed to delete label on server",
+                            code = response.code()
+                        )
+                    }
+                }
+
+                BookmarkRepository.UpdateResult.Success
+            } catch (e: Exception) {
+                Timber.e(e, "Error deleting label")
+                BookmarkRepository.UpdateResult.NetworkError(
+                    errorMessage = "Network error while deleting label",
+                    ex = e
+                )
+            }
         }
 }

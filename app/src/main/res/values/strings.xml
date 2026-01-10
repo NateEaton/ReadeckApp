@@ -39,6 +39,7 @@ other{}
     <string name="videos">Videos</string>
     <string name="pictures">Pictures</string>
     <string name="labels">Labels</string>
+    <string name="bookmark_labels">Bookmark Labels</string>
     <!-- Header titles to match main Readeck app -->
     <string name="header_all">All Your Bookmarks</string>
     <string name="header_unread">Unread Bookmarks</string>
@@ -95,7 +96,7 @@ other{}
     <string name="detail_type">Type</string>
     <string name="detail_labels">Labels</string>
     <string name="detail_add_label">Add label</string>
-    <string name="detail_label_placeholder">Enter a label</string>
+    <string name="detail_label_placeholder">Enter label(s), comma-separated</string>
     <string name="detail_minutes_short">min</string>
     <string name="error_no_article_content">Error, article content not available</string>
     <string name="update_successful">Update successful</string>
@@ -135,4 +136,8 @@ other{}
     <string name="search_no_results">No bookmarks match your search.</string>
     <string name="clear_search">Clear search</string>
     <string name="close_search">Close search</string>
+    <string name="delete_label">Delete</string>
+    <string name="label_deleted">Label %1$s deleted</string>
+    <string name="edit_label">Edit label</string>
+    <string name="labels_description">Organize your bookmarks with labels. Use anything - including emojis!</string>
 </resources>

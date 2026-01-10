@@ -37,7 +37,7 @@ fun LabelsDialog(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.labels)) },
+                title = { Text(stringResource(R.string.bookmark_labels)) },
                 navigationIcon = {
                     IconButton(onClick = onDismiss) {
                         Icon(
@@ -70,7 +70,7 @@ fun LabelsDialog(
                     .padding(paddingValues)
             ) {
                 items(
-                    items = labels.entries.sortedByDescending { it.value }.toList(),
+                    items = labels.entries.sortedBy { it.key }.toList(),
                     key = { it.key }
                 ) { (label, count) ->
                     NavigationDrawerItem(

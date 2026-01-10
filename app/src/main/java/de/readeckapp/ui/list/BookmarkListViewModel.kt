@@ -68,8 +68,12 @@ class BookmarkListViewModel @Inject constructor(
     private val _shareIntent = MutableStateFlow<Intent?>(null)
     val shareIntent: StateFlow<Intent?> = _shareIntent.asStateFlow()
 
-    private val _labelsWithCounts = MutableStateFlow<Map<String, Int>>(emptyMap())
-    val labelsWithCounts: StateFlow<Map<String, Int>> = _labelsWithCounts.asStateFlow()
+    val labelsWithCounts: StateFlow<Map<String, Int>> = bookmarkRepository.observeAllLabelsWithCounts()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyMap()
+        )
 
     private var pendingDeleteJob: kotlinx.coroutines.Job? = null
     private var pendingDeleteId: String? = null
@@ -158,7 +162,8 @@ class BookmarkListViewModel @Inject constructor(
                 title = sharedText?.title ?: "",
                 url = sharedText?.url ?: "",
                 urlError = urlError,
-                isCreateEnabled = urlError == null
+                isCreateEnabled = urlError == null,
+                labels = emptyList()
             )
         }
 
@@ -171,55 +176,37 @@ class BookmarkListViewModel @Inject constructor(
                 loadBookmarks() // Start incremental sync when the ViewModel is created
             }
         }
-
-        // Load labels on initialization
-        loadLabels()
-    }
-
-    private fun loadLabels() {
-        viewModelScope.launch {
-            try {
-                val labels = bookmarkRepository.getAllLabelsWithCounts()
-                _labelsWithCounts.value = labels
-            } catch (e: Exception) {
-                Timber.e(e, "Error loading labels")
-            }
-        }
     }
 
     // Filter update functions
     private fun setTypeFilter(type: Bookmark.Type?) {
-        // Clear status filters when selecting a type filter
-        _filterState.value = _filterState.value.copy(
-            type = type,
-            unread = null,
-            archived = null,
-            favorite = null
-        )
+        // Clear all other filters when selecting a type filter
+        _filterState.value = FilterState(type = type)
     }
 
     private fun setUnreadFilter(unread: Boolean?) {
-        // Clear type filter when selecting a status filter
-        _filterState.value =
-            _filterState.value.copy(type = null, unread = unread, archived = null, favorite = null)
+        // Clear all other filters when selecting a status filter
+        _filterState.value = FilterState(unread = unread)
     }
 
     private fun setArchivedFilter(archived: Boolean?) {
-        // Clear type filter when selecting a status filter
-        _filterState.value =
-            _filterState.value.copy(type = null, archived = archived, unread = null, favorite = null)
+        // Clear all other filters when selecting a status filter
+        _filterState.value = FilterState(archived = archived)
     }
 
     private fun setFavoriteFilter(favorite: Boolean?) {
-        // Clear type filter when selecting a status filter
-        _filterState.value =
-            _filterState.value.copy(type = null, favorite = favorite, unread = null, archived = null)
+        // Clear all other filters when selecting a status filter
+        _filterState.value = FilterState(favorite = favorite)
     }
 
     private fun setLabelFilter(label: String?) {
-        // Clear other filters when selecting a label filter
-        _filterState.value =
-            _filterState.value.copy(type = null, unread = null, archived = null, favorite = null, label = label)
+        // Clear all other filters when selecting a label filter
+        _filterState.value = FilterState(label = label)
+    }
+
+    private fun setLabelsListView() {
+        // Show the labels list view
+        _filterState.value = FilterState(viewingLabelsList = true)
     }
 
     // UI event handlers (already present, but need modification)
@@ -262,9 +249,56 @@ class BookmarkListViewModel @Inject constructor(
         setTypeFilter(Bookmark.Type.Video)
     }
 
+    fun onClickLabelsView() {
+        Timber.d("onClickLabelsView")
+        setLabelsListView()
+    }
+
     fun onClickLabel(label: String) {
         Timber.d("onClickLabel: $label")
         setLabelFilter(label)
+    }
+
+    fun onRenameLabel(oldLabel: String, newLabel: String) {
+        viewModelScope.launch {
+            try {
+                when (bookmarkRepository.renameLabel(oldLabel, newLabel)) {
+                    is BookmarkRepository.UpdateResult.Success -> {
+                        // Update the filter state with the new label name
+                        if (_filterState.value.label == oldLabel) {
+                            setLabelFilter(newLabel)
+                        }
+                        // Labels will auto-refresh via Flow
+                    }
+                    is BookmarkRepository.UpdateResult.Error,
+                    is BookmarkRepository.UpdateResult.NetworkError -> {
+                        Timber.e("Failed to rename label")
+                    }
+                }
+            } catch (e: Exception) {
+                Timber.e(e, "Error renaming label")
+            }
+        }
+    }
+
+    fun onDeleteLabel(label: String) {
+        viewModelScope.launch {
+            try {
+                when (bookmarkRepository.deleteLabel(label)) {
+                    is BookmarkRepository.UpdateResult.Success -> {
+                        // Navigate back to labels list page
+                        _filterState.value = FilterState(viewingLabelsList = true)
+                        // Labels will auto-refresh via Flow
+                    }
+                    is BookmarkRepository.UpdateResult.Error,
+                    is BookmarkRepository.UpdateResult.NetworkError -> {
+                        Timber.e("Failed to delete label")
+                    }
+                }
+            } catch (e: Exception) {
+                Timber.e(e, "Error deleting label")
+            }
+        }
     }
 
     fun onClickSettings() {
@@ -338,9 +372,9 @@ class BookmarkListViewModel @Inject constructor(
         pendingDeleteJob?.cancel()
         pendingDeleteId = bookmarkId
 
-        // Schedule the actual deletion after 5 seconds
+        // Schedule the actual deletion after 10 seconds
         pendingDeleteJob = viewModelScope.launch {
-            delay(5000) // 5 second delay for undo
+            delay(10000) // 10 second delay to match Snackbar duration
             if (pendingDeleteId == bookmarkId) {
                 updateBookmark {
                     updateBookmarkUseCase.deleteBookmark(bookmarkId)
@@ -404,7 +438,8 @@ class BookmarkListViewModel @Inject constructor(
             title = "",
             url = "",
             urlError = null,
-            isCreateEnabled = false
+            isCreateEnabled = false,
+            labels = emptyList()
         )
     }
 
@@ -437,14 +472,23 @@ class BookmarkListViewModel @Inject constructor(
         }
     }
 
+    fun updateCreateBookmarkLabels(labels: List<String>) {
+        _createBookmarkUiState.update {
+            (it as? CreateBookmarkUiState.Open)?.copy(
+                labels = labels
+            ) ?: it
+        }
+    }
+
     fun createBookmark() {
         viewModelScope.launch {
             val url = (_createBookmarkUiState.value as CreateBookmarkUiState.Open).url
             val title = (_createBookmarkUiState.value as CreateBookmarkUiState.Open).title
+            val labels = (_createBookmarkUiState.value as CreateBookmarkUiState.Open).labels
 
             _createBookmarkUiState.value = CreateBookmarkUiState.Loading
             try {
-                bookmarkRepository.createBookmark(title = title, url = url)
+                bookmarkRepository.createBookmark(title = title, url = url, labels = labels)
                 _createBookmarkUiState.value = CreateBookmarkUiState.Success
             } catch (e: Exception) {
                 _createBookmarkUiState.value =
@@ -463,7 +507,8 @@ class BookmarkListViewModel @Inject constructor(
         val unread: Boolean? = null,
         val archived: Boolean? = null,
         val favorite: Boolean? = null,
-        val label: String? = null
+        val label: String? = null,
+        val viewingLabelsList: Boolean = false
     )
 
     sealed class UiState {
@@ -483,7 +528,8 @@ class BookmarkListViewModel @Inject constructor(
             val title: String,
             val url: String,
             val urlError: Int?,
-            val isCreateEnabled: Boolean
+            val isCreateEnabled: Boolean,
+            val labels: List<String>
         ) : CreateBookmarkUiState()
 
         data object Loading : CreateBookmarkUiState()

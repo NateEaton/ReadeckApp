@@ -198,9 +198,9 @@ class BookmarkDetailViewModel @Inject constructor(
         // Signal that a delete has been initiated
         _deleteInitiated.value = true
 
-        // Schedule the actual deletion after 5 seconds
+        // Schedule the actual deletion after 10 seconds
         pendingDeleteJob = viewModelScope.launch {
-            delay(5000) // 5 second delay for undo
+            delay(10000) // 10 second delay to match Snackbar duration
             val state = when (val result = updateBookmarkUseCase.deleteBookmark(bookmarkId)) {
                 is UpdateBookmarkUseCase.Result.Success -> UpdateBookmarkState.Success
                 is UpdateBookmarkUseCase.Result.GenericError -> UpdateBookmarkState.Error(result.message)
