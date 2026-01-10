@@ -2,6 +2,7 @@ package de.readeckapp.ui.list
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,7 +14,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.Bookmarks
@@ -61,6 +64,10 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -104,6 +111,10 @@ fun BookmarkListScreen(navHostController: NavHostController) {
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
     var showLabelsDialog by remember { mutableStateOf(false) }
+    var isEditingLabel by remember { mutableStateOf(false) }
+    var editedLabelName by remember { mutableStateOf("") }
+    var pendingDeleteLabel by remember { mutableStateOf<String?>(null) }
+    var deleteLabelJob by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
 
     val pullToRefreshState = rememberPullToRefreshState()
     val isLoading by viewModel.loadBookmarksIsRunning.collectAsState()
@@ -351,6 +362,7 @@ fun BookmarkListScreen(navHostController: NavHostController) {
                             scope.launch { drawerState.close() }
                         }
                     )
+                    HorizontalDivider()
                     NavigationDrawerItem(
                         label = { Text(
                             style = Typography.labelLarge,
@@ -410,7 +422,24 @@ fun BookmarkListScreen(navHostController: NavHostController) {
                             )
                         } else {
                             if (filterState.value.label != null) {
-                                Text(filterState.value.label!!)
+                                if (isEditingLabel) {
+                                    TextField(
+                                        value = editedLabelName,
+                                        onValueChange = { editedLabelName = it },
+                                        singleLine = true,
+                                        colors = TextFieldDefaults.colors(
+                                            focusedContainerColor = MaterialTheme.colorScheme.surface,
+                                            unfocusedContainerColor = MaterialTheme.colorScheme.surface
+                                        ),
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
+                                } else {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text("${stringResource(id = R.string.labels)} / ${filterState.value.label}")
+                                    }
+                                }
                             } else {
                                 val titleRes = when {
                                     filterState.value.unread == true -> R.string.header_unread
@@ -447,7 +476,37 @@ fun BookmarkListScreen(navHostController: NavHostController) {
                         }
                     },
                     actions = {
-                        if (!isSearchActive.value) {
+                        if (filterState.value.label != null && !isSearchActive.value) {
+                            // Show edit/check icon when a label is selected
+                            if (isEditingLabel) {
+                                IconButton(
+                                    onClick = {
+                                        // Save the edited label
+                                        if (editedLabelName.isNotBlank() && editedLabelName != filterState.value.label) {
+                                            viewModel.onRenameLabel(filterState.value.label!!, editedLabelName)
+                                        }
+                                        isEditingLabel = false
+                                    }
+                                ) {
+                                    Icon(
+                                        Icons.Filled.Check,
+                                        contentDescription = "Save"
+                                    )
+                                }
+                            } else {
+                                IconButton(
+                                    onClick = {
+                                        editedLabelName = filterState.value.label ?: ""
+                                        isEditingLabel = true
+                                    }
+                                ) {
+                                    Icon(
+                                        Icons.Filled.Edit,
+                                        contentDescription = stringResource(id = R.string.edit_label)
+                                    )
+                                }
+                            }
+                        } else if (!isSearchActive.value) {
                             IconButton(
                                 onClick = { viewModel.onSearchActiveChange(true) }
                             ) {
@@ -478,15 +537,64 @@ fun BookmarkListScreen(navHostController: NavHostController) {
                 }
             }
         ) { padding ->
-            PullToRefreshBox(
-                isRefreshing = isLoading,
-                onRefresh = { viewModel.onPullToRefresh() },
-                state = pullToRefreshState,
-                modifier = Modifier
-                    .padding(padding)
-                    .fillMaxWidth()
-            ) {
-                when (uiState) {
+            Column(modifier = Modifier.padding(padding)) {
+                // Show Delete button when a label is selected
+                if (filterState.value.label != null && !isEditingLabel) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        horizontalArrangement = Arrangement.Start
+                    ) {
+                        OutlinedButton(
+                            onClick = {
+                                // Cancel any existing delete operation
+                                deleteLabelJob?.cancel()
+
+                                // Set pending delete
+                                pendingDeleteLabel = filterState.value.label
+
+                                // Show snackbar with undo option
+                                scope.launch {
+                                    val result = snackbarHostState.showSnackbar(
+                                        message = stringResource(R.string.label_deleted, filterState.value.label!!),
+                                        actionLabel = "UNDO",
+                                        duration = SnackbarDuration.Long
+                                    )
+
+                                    if (result == androidx.compose.material3.SnackbarResult.ActionPerformed) {
+                                        // User clicked undo, cancel the deletion
+                                        deleteLabelJob?.cancel()
+                                        pendingDeleteLabel = null
+                                    }
+                                }
+
+                                // Schedule the actual deletion after 5 seconds
+                                deleteLabelJob = scope.launch {
+                                    kotlinx.coroutines.delay(5000)
+                                    if (pendingDeleteLabel == filterState.value.label) {
+                                        viewModel.onDeleteLabel(filterState.value.label!!)
+                                        pendingDeleteLabel = null
+                                    }
+                                }
+                            },
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.error),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor = MaterialTheme.colorScheme.error
+                            )
+                        ) {
+                            Text(stringResource(id = R.string.delete_label))
+                        }
+                    }
+                }
+
+                PullToRefreshBox(
+                    isRefreshing = isLoading,
+                    onRefresh = { viewModel.onPullToRefresh() },
+                    state = pullToRefreshState,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    when (uiState) {
                     is BookmarkListViewModel.UiState.Empty -> {
                         EmptyScreen(messageResource = uiState.messageResource)
                     }
@@ -526,6 +634,7 @@ fun BookmarkListScreen(navHostController: NavHostController) {
                         )
                     }
                 }
+            }
             }
 
             // Show the CreateBookmarkDialog based on the state

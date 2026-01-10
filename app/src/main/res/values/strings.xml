@@ -39,6 +39,7 @@ other{}
     <string name="videos">Videos</string>
     <string name="pictures">Pictures</string>
     <string name="labels">Labels</string>
+    <string name="bookmark_labels">Bookmark Labels</string>
     <!-- Header titles to match main Readeck app -->
     <string name="header_all">All Your Bookmarks</string>
     <string name="header_unread">Unread Bookmarks</string>
@@ -135,4 +136,7 @@ other{}
     <string name="search_no_results">No bookmarks match your search.</string>
     <string name="clear_search">Clear search</string>
     <string name="close_search">Close search</string>
+    <string name="delete_label">Delete</string>
+    <string name="label_deleted">Label %1$s deleted</string>
+    <string name="edit_label">Edit label</string>
 </resources>

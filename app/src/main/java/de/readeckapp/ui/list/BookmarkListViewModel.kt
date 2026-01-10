@@ -279,6 +279,50 @@ class BookmarkListViewModel @Inject constructor(
         setLabelFilter(label)
     }
 
+    fun onRenameLabel(oldLabel: String, newLabel: String) {
+        viewModelScope.launch {
+            try {
+                when (bookmarkRepository.renameLabel(oldLabel, newLabel)) {
+                    is BookmarkRepository.UpdateResult.Success -> {
+                        // Update the filter state with the new label name
+                        if (_filterState.value.label == oldLabel) {
+                            setLabelFilter(newLabel)
+                        }
+                        // Reload labels to reflect the change
+                        loadLabels()
+                    }
+                    is BookmarkRepository.UpdateResult.Error,
+                    is BookmarkRepository.UpdateResult.NetworkError -> {
+                        Timber.e("Failed to rename label")
+                    }
+                }
+            } catch (e: Exception) {
+                Timber.e(e, "Error renaming label")
+            }
+        }
+    }
+
+    fun onDeleteLabel(label: String) {
+        viewModelScope.launch {
+            try {
+                when (bookmarkRepository.deleteLabel(label)) {
+                    is BookmarkRepository.UpdateResult.Success -> {
+                        // Clear the label filter and switch to unread view
+                        _filterState.value = FilterState(unread = true)
+                        // Reload labels to reflect the deletion
+                        loadLabels()
+                    }
+                    is BookmarkRepository.UpdateResult.Error,
+                    is BookmarkRepository.UpdateResult.NetworkError -> {
+                        Timber.e("Failed to delete label")
+                    }
+                }
+            } catch (e: Exception) {
+                Timber.e(e, "Error deleting label")
+            }
+        }
+    }
+
     fun onClickSettings() {
         Timber.d("onClickSettings")
         _navigationEvent.update { NavigationEvent.NavigateToSettings }

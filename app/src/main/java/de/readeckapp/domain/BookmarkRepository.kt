@@ -40,6 +40,8 @@ interface BookmarkRepository {
     suspend fun createBookmark(title: String, url: String): String
     suspend fun updateBookmark(bookmarkId: String, isFavorite: Boolean?, isArchived: Boolean?, isRead: Boolean?): UpdateResult
     suspend fun updateLabels(bookmarkId: String, labels: List<String>): UpdateResult
+    suspend fun renameLabel(oldLabel: String, newLabel: String): UpdateResult
+    suspend fun deleteLabel(label: String): UpdateResult
     suspend fun performFullSync(): SyncResult
     fun observeAllBookmarkCounts(): Flow<BookmarkCounts>
     suspend fun getAllLabelsWithCounts(): Map<String, Int>
