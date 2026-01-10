@@ -308,8 +308,8 @@ class BookmarkListViewModel @Inject constructor(
             try {
                 when (bookmarkRepository.deleteLabel(label)) {
                     is BookmarkRepository.UpdateResult.Success -> {
-                        // Clear the label filter and switch to unread view
-                        _filterState.value = FilterState(unread = true)
+                        // Navigate back to labels list page
+                        _filterState.value = FilterState(viewingLabelsList = true)
                         // Reload labels to reflect the deletion
                         loadLabels()
                     }
