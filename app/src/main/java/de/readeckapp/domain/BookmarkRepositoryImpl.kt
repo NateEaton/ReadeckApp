@@ -289,6 +289,9 @@ class BookmarkRepositoryImpl @Inject constructor(
                     )
                 if (response.isSuccessful) {
                     Timber.i("Update Labels successful")
+                    // Update the local database with the new labels
+                    val updatedBookmark = originalBookmark.copy(labels = labels)
+                    bookmarkDao.insertBookmark(updatedBookmark.toEntity())
                     BookmarkRepository.UpdateResult.Success
                 } else {
                     val code = response.code()

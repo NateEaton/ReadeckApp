@@ -788,6 +788,16 @@ fun CreateBookmarkDialog(
         confirmButton = {
             Button(
                 onClick = {
+                    // Process any pending label input before creating
+                    if (newLabelInput.isNotBlank()) {
+                        val newLabels = newLabelInput.split(',')
+                            .map { it.trim() }
+                            .filter { it.isNotBlank() && !labels.contains(it) }
+
+                        if (newLabels.isNotEmpty()) {
+                            onLabelsChange(labels + newLabels)
+                        }
+                    }
                     onCreateBookmark()
                 },
                 enabled = isCreateEnabled
