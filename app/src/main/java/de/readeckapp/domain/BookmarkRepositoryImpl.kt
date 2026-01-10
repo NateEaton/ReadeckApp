@@ -65,7 +65,8 @@ class BookmarkRepositoryImpl @Inject constructor(
         unread: Boolean?,
         archived: Boolean?,
         favorite: Boolean?,
-        state: Bookmark.State?
+        state: Bookmark.State?,
+        label: String?
     ): Flow<List<BookmarkListItem>> {
         return bookmarkDao.getBookmarkListItemsByFilters(
             type = type?.let {
@@ -84,7 +85,8 @@ class BookmarkRepositoryImpl @Inject constructor(
                     Bookmark.State.ERROR -> BookmarkEntity.State.ERROR
                     Bookmark.State.LOADING -> BookmarkEntity.State.LOADING
                 }
-            }
+            },
+            label = label
         ).map { listItems ->
             listItems.map { listItem ->
                 BookmarkListItem(
@@ -264,6 +266,83 @@ class BookmarkRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun updateLabels(bookmarkId: String, labels: List<String>): BookmarkRepository.UpdateResult {
+        return withContext(dispatcher) {
+            try {
+                // Get the original labels from the database
+                val originalBookmark = getBookmarkById(bookmarkId)
+                val originalLabels = originalBookmark.labels
+
+                // Calculate which labels were added and removed
+                val addedLabels = labels.filter { it !in originalLabels }
+                val removedLabels = originalLabels.filter { it !in labels }
+
+                Timber.d("Label update: added=$addedLabels, removed=$removedLabels")
+
+                val response =
+                    readeckApi.editBookmark(
+                        id = bookmarkId,
+                        body = EditBookmarkDto(
+                            addLabels = addedLabels.takeIf { it.isNotEmpty() },
+                            removeLabels = removedLabels.takeIf { it.isNotEmpty() }
+                        )
+                    )
+                if (response.isSuccessful) {
+                    Timber.i("Update Labels successful")
+                    BookmarkRepository.UpdateResult.Success
+                } else {
+                    val code = response.code()
+                    val errorBodyString = response.errorBody()?.string()
+                    Timber.w("Error while Update Labels [code=$code, body=$errorBodyString]")
+                    when (code) {
+                        422 -> {
+                            if (!errorBodyString.isNullOrBlank()) {
+                                try {
+                                    json.decodeFromString<EditBookmarkErrorDto>(errorBodyString)
+                                        .let {
+                                            BookmarkRepository.UpdateResult.Error(
+                                                it.errors.toString(),
+                                                response.code()
+                                            )
+                                        }
+                                } catch (e: SerializationException) {
+                                    Timber.e(e, "Failed to parse error: ${e.message}")
+                                    BookmarkRepository.UpdateResult.Error(
+                                        errorMessage = "Failed to parse error: ${e.message}",
+                                        code = response.code(),
+                                        ex = e
+                                    )
+                                }
+                            } else {
+                                Timber.e("Empty error body")
+                                BookmarkRepository.UpdateResult.Error(
+                                    errorMessage = "Empty error body",
+                                    code = code
+                                )
+                            }
+                        }
+                        else -> {
+                            val errorState = handleStatusMessage(response.code(), errorBodyString)
+                            BookmarkRepository.UpdateResult.Error(
+                                errorMessage = errorState.message,
+                                code = errorState.status
+                            )
+                        }
+                    }
+                }
+            } catch (e: IOException) {
+                Timber.e(e, "Network error while Update Labels: ${e.message}")
+                BookmarkRepository.UpdateResult.NetworkError("Network error: ${e.message}", ex = e)
+            } catch (e: Exception) {
+                Timber.e(e, "Unexpected error while Update Labels: ${e.message}")
+                BookmarkRepository.UpdateResult.Error(
+                    "An unexpected error occurred: ${e.message}",
+                    ex = e
+                )
+            }
+        }
+    }
+
     override suspend fun deleteBookmark(id: String): BookmarkRepository.UpdateResult {
         return withContext(dispatcher) {
             try {
@@ -396,4 +475,23 @@ class BookmarkRepositoryImpl @Inject constructor(
             }
         }
     }
+
+    override suspend fun getAllLabelsWithCounts(): Map<String, Int> =
+        withContext(dispatcher) {
+            val labelsStringList = bookmarkDao.getAllLabels()
+            val labelCounts = mutableMapOf<String, Int>()
+
+            // Parse each labels string and count occurrences
+            for (labelsString in labelsStringList) {
+                if (labelsString.isNotEmpty()) {
+                    // Split by comma to get individual labels
+                    val labels = labelsString.split(",").map { it.trim() }.filter { it.isNotEmpty() }
+                    for (label in labels) {
+                        labelCounts[label] = (labelCounts[label] ?: 0) + 1
+                    }
+                }
+            }
+
+            labelCounts.toMap()
+        }
 }

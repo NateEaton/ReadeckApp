@@ -38,6 +38,16 @@ android {
         }
     }
     signingConfigs {
+        getByName("debug") {
+            val debugKeystorePath = System.getProperty("user.home") + "/.android/debug.keystore"
+            val debugKeystoreFile = file(debugKeystorePath)
+            if (debugKeystoreFile.exists()) {
+                storeFile = debugKeystoreFile
+                storePassword = "android"
+                keyAlias = "androiddebugkey"
+                keyPassword = "android"
+            }
+        }
         create("release") {
             val appKeystoreFile = System.getenv()["KEYSTORE"] ?: "none"
             val appKeyAlias = System.getenv()["KEY_ALIAS"]
@@ -68,6 +78,7 @@ android {
             isMinifyEnabled = false
             isShrinkResources = false
             isDebuggable = true
+            signingConfig = signingConfigs.getByName("debug")
         }
         applicationVariants.all {
             outputs.all {

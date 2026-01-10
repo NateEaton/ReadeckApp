@@ -21,8 +21,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.CheckBox
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Grade
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.TextDecrease
@@ -52,6 +54,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -96,9 +99,28 @@ fun BookmarkDetailScreen(navHostController: NavController, bookmarkId: String?) 
 
     val onClickOpenUrl: (String) -> Unit = { viewModel.onClickOpenUrl(it) }
     val onClickShareBookmark: (String) -> Unit = { url -> viewModel.onClickShareBookmark(url) }
-    val onClickDeleteBookmark: (String) -> Unit = { viewModel.deleteBookmark(it) }
+    val onClickDeleteBookmark: (String) -> Unit = { bookmarkId ->
+        viewModel.deleteBookmark(bookmarkId)
+        // Deletion will happen after 5 second delay for undo
+    }
+    val onUpdateLabels: (String, List<String>) -> Unit = { id, labels -> viewModel.onUpdateLabels(id, labels) }
     val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
     val uiState = viewModel.uiState.collectAsState().value
+    val deleteInitiated = viewModel.deleteInitiated.collectAsState().value
+
+    LaunchedEffect(key1 = deleteInitiated) {
+        if (deleteInitiated) {
+            val result = snackbarHostState.showSnackbar(
+                message = "Bookmark deleted",
+                actionLabel = "UNDO",
+                duration = SnackbarDuration.Long // 10 seconds
+            )
+            if (result == androidx.compose.material3.SnackbarResult.ActionPerformed) {
+                viewModel.onCancelDeleteBookmark()
+            }
+        }
+    }
 
     LaunchedEffect(key1 = navigationEvent.value) {
         navigationEvent.value?.let { event ->
@@ -151,7 +173,8 @@ fun BookmarkDetailScreen(navHostController: NavController, bookmarkId: String?) 
                 uiState = uiState,
                 onClickOpenUrl = onClickOpenUrl,
                 onClickIncreaseZoomFactor = onClickIncreaseZoomFactor,
-                onClickDecreaseZoomFactor = onClickDecreaseZoomFactor
+                onClickDecreaseZoomFactor = onClickDecreaseZoomFactor,
+                onUpdateLabels = onUpdateLabels
             )
             // Consumes a shareIntent and creates the corresponding share dialog
             ShareBookmarkChooser(
@@ -191,48 +214,65 @@ fun BookmarkDetailScreen(
     onClickOpenUrl: (String) -> Unit,
     onClickShareBookmark: (String) -> Unit,
     onClickIncreaseZoomFactor: () -> Unit,
-    onClickDecreaseZoomFactor: () -> Unit
+    onClickDecreaseZoomFactor: () -> Unit,
+    onUpdateLabels: (String, List<String>) -> Unit = { _, _ -> }
 ) {
-    Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) },
-        modifier = modifier,
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = uiState.bookmark.title,
-                        overflow = TextOverflow.Ellipsis,
-                        maxLines = 1
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onClickBack) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.back)
+    var showDetailsDialog by remember { mutableStateOf(false) }
+
+    // Show full-screen details dialog instead of overlaying it
+    if (showDetailsDialog) {
+        BookmarkDetailsDialog(
+            bookmark = uiState.bookmark,
+            onDismissRequest = { showDetailsDialog = false },
+            onLabelsUpdate = { newLabels ->
+                onUpdateLabels(uiState.bookmark.bookmarkId, newLabels)
+            }
+        )
+    } else {
+        // Normal detail view
+        Scaffold(
+            snackbarHost = { SnackbarHost(snackbarHostState) },
+            modifier = modifier,
+            topBar = {
+                TopAppBar(
+                    title = {
+                        Text(
+                            text = uiState.bookmark.title,
+                            overflow = TextOverflow.Ellipsis,
+                            maxLines = 1
                         )
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = onClickBack) {
+                            Icon(
+                                Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = stringResource(R.string.back)
+                            )
+                        }
                     }
-                }
-            )
-        },
-        floatingActionButton = {
-            BookmarkDetailMenu(
+                )
+            },
+            floatingActionButton = {
+                BookmarkDetailMenu(
+                    uiState = uiState,
+                    onClickToggleFavorite = onClickToggleFavorite,
+                    onClickToggleArchive = onClickToggleArchive,
+                    onMarkRead = onMarkRead,
+                    onClickShareBookmark = onClickShareBookmark,
+                    onClickDeleteBookmark = onClickDeleteBookmark,
+                    onClickIncreaseZoomFactor = onClickIncreaseZoomFactor,
+                    onClickDecreaseZoomFactor = onClickDecreaseZoomFactor,
+                    onUpdateLabels = onUpdateLabels,
+                    onShowDetails = { showDetailsDialog = true }
+                )
+            }
+        ) { padding ->
+            BookmarkDetailContent(
+                modifier = Modifier.padding(padding),
                 uiState = uiState,
-                onClickToggleFavorite = onClickToggleFavorite,
-                onClickToggleArchive = onClickToggleArchive,
-                onMarkRead = onMarkRead,
-                onClickShareBookmark = onClickShareBookmark,
-                onClickDeleteBookmark = onClickDeleteBookmark,
-                onClickIncreaseZoomFactor = onClickIncreaseZoomFactor,
-                onClickDecreaseZoomFactor = onClickDecreaseZoomFactor
+                onClickOpenUrl = onClickOpenUrl
             )
         }
-    ) { padding ->
-        BookmarkDetailContent(
-            modifier = Modifier.padding(padding),
-            uiState = uiState,
-            onClickOpenUrl = onClickOpenUrl
-        )
     }
 }
 
@@ -418,7 +458,9 @@ fun BookmarkDetailMenu(
     onClickShareBookmark: (String) -> Unit,
     onClickDeleteBookmark: (String) -> Unit,
     onClickIncreaseZoomFactor: () -> Unit,
-    onClickDecreaseZoomFactor: () -> Unit
+    onClickDecreaseZoomFactor: () -> Unit,
+    onUpdateLabels: (String, List<String>) -> Unit = { _, _ -> },
+    onShowDetails: () -> Unit = {}
 ) {
     var expanded by remember { mutableStateOf(false) }
 
@@ -519,6 +561,19 @@ fun BookmarkDetailMenu(
                     Icon(
                         Icons.Filled.Delete,
                         contentDescription = stringResource(R.string.action_delete)
+                    )
+                }
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.action_details)) },
+                onClick = {
+                    onShowDetails()
+                    expanded = false
+                },
+                leadingIcon = {
+                    Icon(
+                        Icons.Filled.Info,
+                        contentDescription = stringResource(R.string.action_details)
                     )
                 }
             )

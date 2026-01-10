@@ -55,8 +55,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -95,9 +97,13 @@ fun BookmarkListScreen(navHostController: NavHostController) {
     val searchQuery = viewModel.searchQuery.collectAsState()
     val isSearchActive = viewModel.isSearchActive.collectAsState()
 
+    // Collect labels
+    val labelsWithCounts = viewModel.labelsWithCounts.collectAsState()
+
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
+    var showLabelsDialog by remember { mutableStateOf(false) }
 
     val pullToRefreshState = rememberPullToRefreshState()
     val isLoading by viewModel.loadBookmarksIsRunning.collectAsState()
@@ -110,9 +116,36 @@ fun BookmarkListScreen(navHostController: NavHostController) {
     val onClickFilterArticles: () -> Unit = { viewModel.onClickArticles() }
     val onClickFilterPictures: () -> Unit = { viewModel.onClickPictures() }
     val onClickFilterVideos: () -> Unit = { viewModel.onClickVideos() }
+    val onClickLabel: (String) -> Unit = { label ->
+        viewModel.onClickLabel(label)
+        scope.launch { drawerState.close() }
+    }
+
+    // Show Labels Dialog if requested
+    if (showLabelsDialog) {
+        LabelsDialog(
+            labels = labelsWithCounts.value,
+            onLabelSelected = { label ->
+                onClickLabel(label)
+            },
+            onDismiss = { showLabelsDialog = false }
+        )
+    }
     val onClickSettings: () -> Unit = { viewModel.onClickSettings() }
     val onClickBookmark: (String) -> Unit = { bookmarkId -> viewModel.onClickBookmark(bookmarkId) }
-    val onClickDelete: (String) -> Unit = { bookmarkId -> viewModel.onDeleteBookmark(bookmarkId) }
+    val onClickDelete: (String) -> Unit = { bookmarkId ->
+        viewModel.onDeleteBookmark(bookmarkId)
+        scope.launch {
+            val result = snackbarHostState.showSnackbar(
+                message = "Bookmark deleted",
+                actionLabel = "UNDO",
+                duration = SnackbarDuration.Long // 10 seconds
+            )
+            if (result == androidx.compose.material3.SnackbarResult.ActionPerformed) {
+                viewModel.onCancelDeleteBookmark()
+            }
+        }
+    }
     val onClickMarkRead: (String, Boolean) -> Unit = { bookmarkId, isRead -> viewModel.onToggleMarkReadBookmark(bookmarkId, isRead) }
     val onClickFavorite: (String, Boolean) -> Unit = { bookmarkId, isFavorite -> viewModel.onToggleFavoriteBookmark(bookmarkId, isFavorite) }
     val onClickArchive: (String, Boolean) -> Unit = { bookmarkId, isArchived -> viewModel.onToggleArchiveBookmark(bookmarkId, isArchived) }
@@ -319,6 +352,27 @@ fun BookmarkListScreen(navHostController: NavHostController) {
                             scope.launch { drawerState.close() }
                         }
                     )
+                    NavigationDrawerItem(
+                        label = { Text(
+                            style = Typography.labelLarge,
+                            text = stringResource(id = R.string.labels)
+                        ) },
+                        icon = { Icon(Icons.Outlined.Bookmarks, contentDescription = null) },
+                        badge = {
+                            if (labelsWithCounts.value.isNotEmpty()) {
+                                Badge(containerColor = MaterialTheme.colorScheme.secondaryContainer) {
+                                    Text(
+                                        text = labelsWithCounts.value.size.toString()
+                                    )
+                                }
+                            }
+                        },
+                        selected = false,
+                        onClick = {
+                            showLabelsDialog = true
+                            scope.launch { drawerState.close() }
+                        }
+                    )
                     HorizontalDivider()
                     NavigationDrawerItem(
                         label = { Text(
@@ -356,16 +410,20 @@ fun BookmarkListScreen(navHostController: NavHostController) {
                                 modifier = Modifier.fillMaxWidth()
                             )
                         } else {
-                            val titleRes = when {
-                                filterState.value.unread == true -> R.string.header_unread
-                                filterState.value.archived == true -> R.string.header_archived
-                                filterState.value.favorite == true -> R.string.header_favorites
-                                filterState.value.type == Bookmark.Type.Article -> R.string.articles
-                                filterState.value.type == Bookmark.Type.Video -> R.string.videos
-                                filterState.value.type == Bookmark.Type.Picture -> R.string.pictures
-                                else -> R.string.header_all
+                            if (filterState.value.label != null) {
+                                Text(filterState.value.label!!)
+                            } else {
+                                val titleRes = when {
+                                    filterState.value.unread == true -> R.string.header_unread
+                                    filterState.value.archived == true -> R.string.header_archived
+                                    filterState.value.favorite == true -> R.string.header_favorites
+                                    filterState.value.type == Bookmark.Type.Article -> R.string.articles
+                                    filterState.value.type == Bookmark.Type.Video -> R.string.videos
+                                    filterState.value.type == Bookmark.Type.Picture -> R.string.pictures
+                                    else -> R.string.header_all
+                                }
+                                Text(stringResource(id = titleRes))
                             }
-                            Text(stringResource(id = titleRes))
                         }
                     },
                     navigationIcon = {

@@ -140,7 +140,8 @@ interface BookmarkDao {
         isUnread: Boolean? = null,
         isArchived: Boolean? = null,
         isFavorite: Boolean? = null,
-        state: BookmarkEntity.State? = null
+        state: BookmarkEntity.State? = null,
+        label: String? = null
     ): Flow<List<BookmarkListItemEntity>> {
         val args = mutableListOf<Any>()
         val sqlQuery = buildString {
@@ -186,6 +187,12 @@ interface BookmarkDao {
                 append(" AND isMarked = ?")
                 args.add(it)
             }
+
+            label?.let {
+                append(" AND labels LIKE ?")
+                args.add("%$it%")
+            }
+
             append(" ORDER BY created DESC")
         }.let { SimpleSQLiteQuery(it, args.toTypedArray()) }
         Timber.d("query=${sqlQuery.sql}")
@@ -289,4 +296,11 @@ interface BookmarkDao {
         """
     )
     fun observeAllBookmarkCounts(): Flow<BookmarkCountsEntity?>
+
+    @Query(
+        """
+        SELECT labels FROM bookmarks WHERE state = 0 AND labels != '[]' AND labels IS NOT NULL
+        """
+    )
+    suspend fun getAllLabels(): List<String>
 }

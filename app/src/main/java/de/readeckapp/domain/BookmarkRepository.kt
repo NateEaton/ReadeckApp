@@ -19,7 +19,8 @@ interface BookmarkRepository {
         unread: Boolean? = null,
         archived: Boolean? = null,
         favorite: Boolean? = null,
-        state: Bookmark.State? = null
+        state: Bookmark.State? = null,
+        label: String? = null
     ): Flow<List<BookmarkListItem>>
 
     fun searchBookmarkListItems(
@@ -38,8 +39,10 @@ interface BookmarkRepository {
     suspend fun deleteBookmark(id: String): UpdateResult
     suspend fun createBookmark(title: String, url: String): String
     suspend fun updateBookmark(bookmarkId: String, isFavorite: Boolean?, isArchived: Boolean?, isRead: Boolean?): UpdateResult
+    suspend fun updateLabels(bookmarkId: String, labels: List<String>): UpdateResult
     suspend fun performFullSync(): SyncResult
     fun observeAllBookmarkCounts(): Flow<BookmarkCounts>
+    suspend fun getAllLabelsWithCounts(): Map<String, Int>
     sealed class UpdateResult {
         data object Success: UpdateResult()
         data class Error(val errorMessage: String, val code: Int? = null, val ex: Exception? = null): UpdateResult()

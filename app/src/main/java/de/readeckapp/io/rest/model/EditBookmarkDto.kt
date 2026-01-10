@@ -2,6 +2,7 @@ package de.readeckapp.io.rest.model
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerialName
+import kotlinx.serialization.Transient
 
 @Serializable
 data class EditBookmarkDto(
@@ -13,6 +14,7 @@ data class EditBookmarkDto(
     val isDeleted: Boolean? = null,
     @SerialName("is_marked")
     val isMarked: Boolean? = null,
+    @Transient
     val labels: List<String>? = null,
     @SerialName("read_anchor")
     val readAnchor: String? = null,

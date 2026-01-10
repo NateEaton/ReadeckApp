@@ -38,6 +38,7 @@ other{}
     <string name="articles">Articles</string>
     <string name="videos">Videos</string>
     <string name="pictures">Pictures</string>
+    <string name="labels">Labels</string>
     <!-- Header titles to match main Readeck app -->
     <string name="header_all">All Your Bookmarks</string>
     <string name="header_unread">Unread Bookmarks</string>
@@ -86,6 +87,16 @@ other{}
     <string name="action_open_in_browser">Open in browser</string>
     <string name="action_increase_text_size">Increase text size</string>
     <string name="action_decrease_text_size">Decrease text size</string>
+    <string name="action_details">Details</string>
+    <string name="detail_dialog_title">Bookmark Details</string>
+    <string name="detail_word_count">Word count</string>
+    <string name="detail_reading_time">Reading time</string>
+    <string name="detail_language">Language</string>
+    <string name="detail_type">Type</string>
+    <string name="detail_labels">Labels</string>
+    <string name="detail_add_label">Add label</string>
+    <string name="detail_label_placeholder">Enter a label</string>
+    <string name="detail_minutes_short">min</string>
     <string name="error_no_article_content">Error, article content not available</string>
     <string name="update_successful">Update successful</string>
     <string name="notification_channel_sync_name">Synchronization Errors</string>

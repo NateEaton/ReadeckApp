@@ -53,7 +53,7 @@ class BookmarkListViewModel @Inject constructor(
     private val _openUrlEvent = MutableStateFlow<String>("")
     val openUrlEvent = _openUrlEvent.asStateFlow()
 
-    private val _filterState = MutableStateFlow(FilterState())
+    private val _filterState = MutableStateFlow(FilterState(unread = true))
     val filterState: StateFlow<FilterState> = _filterState.asStateFlow()
 
     private val _searchQuery = MutableStateFlow("")
@@ -67,6 +67,12 @@ class BookmarkListViewModel @Inject constructor(
 
     private val _shareIntent = MutableStateFlow<Intent?>(null)
     val shareIntent: StateFlow<Intent?> = _shareIntent.asStateFlow()
+
+    private val _labelsWithCounts = MutableStateFlow<Map<String, Int>>(emptyMap())
+    val labelsWithCounts: StateFlow<Map<String, Int>> = _labelsWithCounts.asStateFlow()
+
+    private var pendingDeleteJob: kotlinx.coroutines.Job? = null
+    private var pendingDeleteId: String? = null
 
     val loadBookmarksIsRunning: StateFlow<Boolean> = workManager.getWorkInfosForUniqueWorkFlow(
         LoadBookmarksWorker.UNIQUE_WORK_NAME
@@ -108,7 +114,8 @@ class BookmarkListViewModel @Inject constructor(
                         unread = currentFilter.unread,
                         archived = currentFilter.archived,
                         favorite = currentFilter.favorite,
-                        state = Bookmark.State.LOADED
+                        state = Bookmark.State.LOADED,
+                        label = currentFilter.label
                     )
                 } else {
                     // Debounce search queries with delay inside flow builder
@@ -164,6 +171,20 @@ class BookmarkListViewModel @Inject constructor(
                 loadBookmarks() // Start incremental sync when the ViewModel is created
             }
         }
+
+        // Load labels on initialization
+        loadLabels()
+    }
+
+    private fun loadLabels() {
+        viewModelScope.launch {
+            try {
+                val labels = bookmarkRepository.getAllLabelsWithCounts()
+                _labelsWithCounts.value = labels
+            } catch (e: Exception) {
+                Timber.e(e, "Error loading labels")
+            }
+        }
     }
 
     // Filter update functions
@@ -193,6 +214,12 @@ class BookmarkListViewModel @Inject constructor(
         // Clear type filter when selecting a status filter
         _filterState.value =
             _filterState.value.copy(type = null, favorite = favorite, unread = null, archived = null)
+    }
+
+    private fun setLabelFilter(label: String?) {
+        // Clear other filters when selecting a label filter
+        _filterState.value =
+            _filterState.value.copy(type = null, unread = null, archived = null, favorite = null, label = label)
     }
 
     // UI event handlers (already present, but need modification)
@@ -233,6 +260,11 @@ class BookmarkListViewModel @Inject constructor(
     fun onClickVideos() {
         Timber.d("onClickVideos")
         setTypeFilter(Bookmark.Type.Video)
+    }
+
+    fun onClickLabel(label: String) {
+        Timber.d("onClickLabel: $label")
+        setLabelFilter(label)
     }
 
     fun onClickSettings() {
@@ -302,9 +334,25 @@ class BookmarkListViewModel @Inject constructor(
     }
 
     fun onDeleteBookmark(bookmarkId: String) {
-        updateBookmark {
-            updateBookmarkUseCase.deleteBookmark(bookmarkId)
+        // Cancel any previous pending delete
+        pendingDeleteJob?.cancel()
+        pendingDeleteId = bookmarkId
+
+        // Schedule the actual deletion after 5 seconds
+        pendingDeleteJob = viewModelScope.launch {
+            delay(5000) // 5 second delay for undo
+            if (pendingDeleteId == bookmarkId) {
+                updateBookmark {
+                    updateBookmarkUseCase.deleteBookmark(bookmarkId)
+                }
+            }
         }
+    }
+
+    fun onCancelDeleteBookmark() {
+        // Cancel the pending deletion
+        pendingDeleteJob?.cancel()
+        pendingDeleteId = null
     }
 
     fun onToggleMarkReadBookmark(bookmarkId: String, isRead: Boolean) {
@@ -414,7 +462,8 @@ class BookmarkListViewModel @Inject constructor(
         val type: Bookmark.Type? = null,
         val unread: Boolean? = null,
         val archived: Boolean? = null,
-        val favorite: Boolean? = null
+        val favorite: Boolean? = null,
+        val label: String? = null
     )
 
     sealed class UiState {
