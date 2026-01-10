@@ -268,8 +268,7 @@ class BookmarkListViewModel @Inject constructor(
                         if (_filterState.value.label == oldLabel) {
                             setLabelFilter(newLabel)
                         }
-                        // Reload labels to reflect the change
-                        loadLabels()
+                        // Labels will auto-refresh via Flow
                     }
                     is BookmarkRepository.UpdateResult.Error,
                     is BookmarkRepository.UpdateResult.NetworkError -> {
@@ -289,8 +288,7 @@ class BookmarkListViewModel @Inject constructor(
                     is BookmarkRepository.UpdateResult.Success -> {
                         // Navigate back to labels list page
                         _filterState.value = FilterState(viewingLabelsList = true)
-                        // Reload labels to reflect the deletion
-                        loadLabels()
+                        // Labels will auto-refresh via Flow
                     }
                     is BookmarkRepository.UpdateResult.Error,
                     is BookmarkRepository.UpdateResult.NetworkError -> {
