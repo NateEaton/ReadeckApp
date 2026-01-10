@@ -174,6 +174,14 @@ class BookmarkListViewModel @Inject constructor(
 
         // Load labels on initialization
         loadLabels()
+
+        // Reload labels when bookmarks change
+        viewModelScope.launch {
+            bookmarkCounts.collect { counts ->
+                // Reload labels whenever bookmark counts change
+                loadLabels()
+            }
+        }
     }
 
     private fun loadLabels() {
@@ -185,6 +193,10 @@ class BookmarkListViewModel @Inject constructor(
                 Timber.e(e, "Error loading labels")
             }
         }
+    }
+
+    fun reloadLabels() {
+        loadLabels()
     }
 
     // Filter update functions

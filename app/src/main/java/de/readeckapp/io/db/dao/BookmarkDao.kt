@@ -299,7 +299,7 @@ interface BookmarkDao {
 
     @Query(
         """
-        SELECT labels FROM bookmarks WHERE state = 0 AND labels != '[]' AND labels IS NOT NULL
+        SELECT labels FROM bookmarks WHERE state = 0 AND labels != '' AND labels IS NOT NULL
         """
     )
     suspend fun getAllLabels(): List<String>

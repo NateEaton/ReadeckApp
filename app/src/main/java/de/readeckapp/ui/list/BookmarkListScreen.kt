@@ -118,18 +118,6 @@ fun BookmarkListScreen(navHostController: NavHostController) {
     val onClickFilterVideos: () -> Unit = { viewModel.onClickVideos() }
     val onClickLabel: (String) -> Unit = { label ->
         viewModel.onClickLabel(label)
-        scope.launch { drawerState.close() }
-    }
-
-    // Show Labels Dialog if requested
-    if (showLabelsDialog) {
-        LabelsDialog(
-            labels = labelsWithCounts.value,
-            onLabelSelected = { label ->
-                onClickLabel(label)
-            },
-            onDismiss = { showLabelsDialog = false }
-        )
     }
     val onClickSettings: () -> Unit = { viewModel.onClickSettings() }
     val onClickBookmark: (String) -> Unit = { bookmarkId -> viewModel.onClickBookmark(bookmarkId) }
@@ -174,7 +162,18 @@ fun BookmarkListScreen(navHostController: NavHostController) {
         viewModel.onOpenUrlEventConsumed()
     }
 
-    ModalNavigationDrawer(
+    // Show Labels Dialog as full-screen replacement
+    if (showLabelsDialog) {
+        LabelsDialog(
+            labels = labelsWithCounts.value,
+            onLabelSelected = { label ->
+                onClickLabel(label)
+                showLabelsDialog = false
+            },
+            onDismiss = { showLabelsDialog = false }
+        )
+    } else {
+        ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
             ModalDrawerSheet {
@@ -582,6 +581,7 @@ fun BookmarkListScreen(navHostController: NavHostController) {
             }
         }
     }
+    } // End of else block for showLabelsDialog
 }
 
 @Composable
