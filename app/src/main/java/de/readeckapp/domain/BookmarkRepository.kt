@@ -37,7 +37,7 @@ interface BookmarkRepository {
     fun observeBookmark(id: String): Flow<Bookmark?>
     suspend fun deleteAllBookmarks()
     suspend fun deleteBookmark(id: String): UpdateResult
-    suspend fun createBookmark(title: String, url: String): String
+    suspend fun createBookmark(title: String, url: String, labels: List<String> = emptyList()): String
     suspend fun updateBookmark(bookmarkId: String, isFavorite: Boolean?, isArchived: Boolean?, isRead: Boolean?): UpdateResult
     suspend fun updateLabels(bookmarkId: String, labels: List<String>): UpdateResult
     suspend fun renameLabel(oldLabel: String, newLabel: String): UpdateResult

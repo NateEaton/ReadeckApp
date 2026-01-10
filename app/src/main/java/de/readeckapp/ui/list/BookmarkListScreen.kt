@@ -2,20 +2,27 @@ package de.readeckapp.ui.list
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Menu
@@ -31,6 +38,7 @@ import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.TaskAlt
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -73,7 +81,9 @@ import androidx.compose.foundation.border
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -659,8 +669,10 @@ fun BookmarkListScreen(navHostController: NavHostController) {
                         url = createBookmarkUiState.url,
                         urlError = createBookmarkUiState.urlError,
                         isCreateEnabled = createBookmarkUiState.isCreateEnabled,
+                        labels = createBookmarkUiState.labels,
                         onTitleChange = { viewModel.updateCreateBookmarkTitle(it) },
                         onUrlChange = { viewModel.updateCreateBookmarkUrl(it) },
+                        onLabelsChange = { viewModel.updateCreateBookmarkLabels(it) },
                         onCreateBookmark = { viewModel.createBookmark() }
                     )
                 }
@@ -705,6 +717,7 @@ fun BookmarkListScreen(navHostController: NavHostController) {
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun CreateBookmarkDialog(
     onDismiss: () -> Unit,
@@ -712,15 +725,22 @@ fun CreateBookmarkDialog(
     url: String,
     urlError: Int?,
     isCreateEnabled: Boolean,
+    labels: List<String>,
     onTitleChange: (String) -> Unit,
     onUrlChange: (String) -> Unit,
+    onLabelsChange: (List<String>) -> Unit,
     onCreateBookmark: () -> Unit
 ) {
+    var newLabelInput by remember { mutableStateOf("") }
+    val keyboardController = LocalSoftwareKeyboardController.current
+
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(id = R.string.add_new_bookmark)) },
         text = {
-            Column {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 OutlinedTextField(
                     value = url,
                     onValueChange = { onUrlChange(it) },
@@ -730,12 +750,38 @@ fun CreateBookmarkDialog(
                         urlError?.let {
                             Text(text = stringResource(it))
                         }
-                    }
+                    },
+                    modifier = Modifier.fillMaxWidth()
                 )
                 OutlinedTextField(
                     value = title,
                     onValueChange = { onTitleChange(it) },
-                    label = { Text(stringResource(id = R.string.title)) }
+                    label = { Text(stringResource(id = R.string.title)) },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                // Labels Section
+                CreateBookmarkLabelsSection(
+                    labels = labels,
+                    newLabelInput = newLabelInput,
+                    onNewLabelChange = { newLabelInput = it },
+                    onAddLabel = {
+                        if (newLabelInput.isNotBlank()) {
+                            // Split on commas and trim each label
+                            val newLabels = newLabelInput.split(',')
+                                .map { it.trim() }
+                                .filter { it.isNotBlank() && !labels.contains(it) }
+
+                            if (newLabels.isNotEmpty()) {
+                                onLabelsChange(labels + newLabels)
+                            }
+                            newLabelInput = ""
+                            keyboardController?.hide()
+                        }
+                    },
+                    onRemoveLabel = { label ->
+                        onLabelsChange(labels.filter { it != label })
+                    }
                 )
             }
         },
@@ -755,6 +801,93 @@ fun CreateBookmarkDialog(
             }
         }
     )
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun CreateBookmarkLabelsSection(
+    labels: List<String>,
+    newLabelInput: String,
+    onNewLabelChange: (String) -> Unit,
+    onAddLabel: () -> Unit,
+    onRemoveLabel: (String) -> Unit
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Text(
+            text = stringResource(R.string.detail_labels),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        // Existing labels
+        if (labels.isNotEmpty()) {
+            FlowRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                labels.forEach { label ->
+                    LabelChip(
+                        label = label,
+                        onRemove = {
+                            onRemoveLabel(label)
+                        }
+                    )
+                }
+            }
+        }
+
+        // Input field for new label
+        OutlinedTextField(
+            value = newLabelInput,
+            onValueChange = onNewLabelChange,
+            placeholder = { Text(stringResource(R.string.detail_label_placeholder)) },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+            keyboardActions = KeyboardActions(
+                onDone = { onAddLabel() }
+            ),
+            textStyle = MaterialTheme.typography.bodySmall
+        )
+    }
+}
+
+@Composable
+private fun LabelChip(
+    label: String,
+    onRemove: () -> Unit = {}
+) {
+    Card(
+        modifier = Modifier.padding(4.dp),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                modifier = Modifier.weight(1f, fill = false)
+            )
+            IconButton(
+                onClick = onRemove,
+                modifier = Modifier.size(20.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Close,
+                    contentDescription = "Remove label",
+                    modifier = Modifier.size(16.dp)
+                )
+            }
+        }
+    }
 }
 
 @Composable
@@ -827,6 +960,14 @@ fun LabelsListView(
         LazyColumn(
             modifier = modifier.fillMaxWidth()
         ) {
+            item {
+                Text(
+                    text = stringResource(R.string.labels_description),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
+                )
+            }
             items(
                 items = labels.entries.sortedBy { it.key }.toList(),
                 key = { it.key }

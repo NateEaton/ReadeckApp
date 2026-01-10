@@ -139,4 +139,5 @@ other{}
     <string name="delete_label">Delete</string>
     <string name="label_deleted">Label %1$s deleted</string>
     <string name="edit_label">Edit label</string>
+    <string name="labels_description">Organize your bookmarks with labels. Use anything - including emojis!</string>
 </resources>
