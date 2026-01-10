@@ -636,9 +636,8 @@ fun BookmarkListScreen(navHostController: NavHostController) {
                         )
                     }
                 }
-                    }
                 }
-            }
+                }
             }
 
             // Show the CreateBookmarkDialog based on the state
