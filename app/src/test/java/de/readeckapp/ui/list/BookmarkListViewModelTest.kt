@@ -70,6 +70,7 @@ class BookmarkListViewModelTest {
         every { savedStateHandle.get<String>(any()) } returns null // no sharedUrl initially
         every { workManager.getWorkInfosForUniqueWorkFlow(any()) } returns workInfoFlow
         every { bookmarkRepository.observeAllBookmarkCounts() } returns flowOf(BookmarkCounts())
+        every { bookmarkRepository.observeAllLabelsWithCounts() } returns flowOf(emptyMap())
     }
 
     @After
