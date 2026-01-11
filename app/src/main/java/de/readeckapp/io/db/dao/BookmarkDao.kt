@@ -189,8 +189,10 @@ interface BookmarkDao {
             }
 
             label?.let {
-                append(" AND labels LIKE ?")
-                args.add("%$it%")
+                // Exact label match: wrap labels with commas and search for exact label
+                // This prevents "ai" from matching "email" or "sailing"
+                append(" AND (',' || labels || ',') LIKE ?")
+                args.add("%,$it,%")
             }
 
             append(" ORDER BY created DESC")
