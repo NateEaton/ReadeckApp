@@ -459,6 +459,101 @@ git cherry-pick e472589  # Convert to full-screen
 # ... and related fixes
 ```
 
+### Alternative: Clean Room Reimplementation
+
+For features with complex, tangled commit histories (especially **Labels** and potentially **Search**), a cleaner approach may be to start fresh from upstream and manually reimplement the feature using the current working code as a reference guide.
+
+**When to use this approach:**
+- Feature has many iterative fix commits (Labels has 26)
+- Commits contain mixed changes (upstream + excluded content)
+- Cherry-picking would require extensive conflict resolution
+- You want a cleaner commit history for the upstream PR
+
+**Benefits:**
+- Produces clean, logical commits that are easier to review
+- No risk of accidentally including excluded changes
+- Opportunity to improve implementation while reimplementing
+- Results in a proper "feature branch" workflow
+
+#### Clean Room Process for Labels Feature
+
+```bash
+# 1. Start from clean upstream state
+git checkout -b feature/labels-clean upstream/main
+
+# 2. Keep your current main branch available for reference
+#    (use a second terminal or IDE window to view the working code)
+
+# 3. Implement in logical chunks, committing after each:
+
+# Commit 1: Database layer
+#   - Add label queries to BookmarkDao.kt
+#   - Add observeAllLabelsWithCounts()
+#   Reference: current BookmarkDao.kt lines with label functions
+
+# Commit 2: Repository layer
+#   - Add getAllLabelsWithCounts() to BookmarkRepository interface
+#   - Implement in BookmarkRepositoryImpl
+#   - Add renameLabel(), deleteLabel(), updateLabels()
+#   Reference: current repository files
+
+# Commit 3: ViewModel state management
+#   - Add label-related state to BookmarkListViewModel
+#   - Add label filtering logic
+#   - Add CRUD operation handlers
+#   Reference: current BookmarkListViewModel.kt
+
+# Commit 4: Labels list UI
+#   - Create LabelsDialog.kt (can copy directly - it's a new file)
+#   - Add LabelsListView composable to BookmarkListScreen
+#   - Wire up navigation drawer entry
+#   Reference: current UI files
+
+# Commit 5: Details modal with label editing
+#   - Create BookmarkDetailsDialog.kt (new file)
+#   - Add inline label editing capability
+#   Reference: current BookmarkDetailsDialog.kt
+
+# Commit 6: Labels in create bookmark flow
+#   - Add labels parameter to bookmark creation
+#   - Update create dialog UI
+#   Reference: current implementation
+
+# Commit 7: String resources
+#   - Add all label-related strings to strings.xml
+```
+
+#### Clean Room Process for Search Feature
+
+```bash
+git checkout -b feature/search-clean upstream/main
+
+# Commit 1: Database layer
+#   - Add searchBookmarkListItems() to BookmarkDao.kt
+#   Reference: lines 45-80 of current BookmarkDao.kt
+
+# Commit 2: Repository layer
+#   - Add interface method to BookmarkRepository.kt
+#   - Implement in BookmarkRepositoryImpl.kt
+#   Reference: current repository files
+
+# Commit 3: ViewModel + UI
+#   - Add search state management to BookmarkListViewModel.kt
+#   - Add search UI to BookmarkListScreen.kt TopAppBar
+#   - Add string resources
+#   Reference: current ViewModel and Screen files
+```
+
+**Recommended approach by feature:**
+
+| Feature | Recommended Approach | Reason |
+|---------|---------------------|--------|
+| Search | Cherry-pick with cleanup | Only 1 commit + test fixes, manageable |
+| Unread Default | Cherry-pick | Single clean commit |
+| Delete with Undo | Cherry-pick | Single clean commit |
+| Filter Display | Cherry-pick + squash | 3 related commits, no entanglement |
+| **Labels System** | **Clean room** | 26 commits, heavy entanglement, complex |
+
 ### Phase 3: Validation Checklist
 
 For each PR branch, verify:
