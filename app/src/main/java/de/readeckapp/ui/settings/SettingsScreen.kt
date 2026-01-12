@@ -9,7 +9,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.filled.Visibility
@@ -34,7 +33,6 @@ import androidx.navigation.NavHostController
 import de.readeckapp.R
 import de.readeckapp.ui.navigation.AccountSettingsRoute
 import de.readeckapp.ui.navigation.LogViewRoute
-import de.readeckapp.ui.navigation.OpenSourceLibrariesRoute
 import de.readeckapp.ui.navigation.SyncSettingsRoute
 import de.readeckapp.ui.navigation.UiSettingsRoute
 
@@ -47,7 +45,6 @@ fun SettingsScreen(
     val navigationEvent = viewModel.navigationEvent.collectAsState()
     val onClickAccount: () -> Unit = { viewModel.onClickAccount() }
     val onClickBack: () -> Unit = { viewModel.onClickBack() }
-    val onClickOpenSourceLibraries: () -> Unit = { viewModel.onClickOpenSourceLibraries() }
     val onClickLogs: () -> Unit = { viewModel.onClickLogs() }
     val onClickSync: () -> Unit = { viewModel.onClickSync() }
     val onClickUi: () -> Unit = { viewModel.onClickView() }
@@ -56,9 +53,6 @@ fun SettingsScreen(
             when (event) {
                 is SettingsViewModel.NavigationEvent.NavigateToAccountSettings -> {
                     navHostController.navigate(AccountSettingsRoute)
-                }
-                is SettingsViewModel.NavigationEvent.NavigateToOpenSourceLibraries -> {
-                    navHostController.navigate(OpenSourceLibrariesRoute)
                 }
                 is SettingsViewModel.NavigationEvent.NavigateToLogView -> {
                     navHostController.navigate(LogViewRoute)
@@ -80,7 +74,6 @@ fun SettingsScreen(
         settingsUiState = settingsUiState,
         onClickAccount = onClickAccount,
         onClickBack = onClickBack,
-        onClickOpenSourceLibraries = onClickOpenSourceLibraries,
         onClickLogs = onClickLogs,
         onClickSync = onClickSync,
         onClickUi = onClickUi
@@ -93,7 +86,6 @@ fun SettingScreenView(
     settingsUiState: SettingsUiState,
     onClickAccount: () -> Unit,
     onClickBack: () -> Unit,
-    onClickOpenSourceLibraries: () -> Unit,
     onClickLogs: () -> Unit,
     onClickSync: () -> Unit,
     onClickUi: () -> Unit
@@ -129,13 +121,6 @@ fun SettingScreenView(
                     ?: stringResource(R.string.settings_account_subtitle_default),
                 onClick = onClickAccount,
                 testTag = SettingsScreenTestTags.SETTINGS_ITEM_ACCOUNT
-            )
-            SettingItem(
-                icon = Icons.Filled.List,
-                title = stringResource(R.string.settings_open_source_libraries),
-                subtitle = stringResource(R.string.settings_open_source_libraries_subtitle),
-                onClick = onClickOpenSourceLibraries,
-                testTag = SettingsScreenTestTags.SETTINGS_ITEM_OPEN_SOURCE
             )
             SettingItem(
                 icon = Icons.Filled.Info,
@@ -203,7 +188,6 @@ fun SettingScreenViewPreview() {
         ),
         onClickAccount = {},
         onClickBack = {},
-        onClickOpenSourceLibraries = {},
         onClickLogs = {},
         onClickSync = {},
         onClickUi = {}
@@ -229,7 +213,6 @@ object SettingsScreenTestTags {
     const val SETTINGS_ITEM_TITLE = "SettingsScreenTestTags.SettingsItem.Title"
     const val SETTINGS_ITEM_SUBTITLE = "SettingsScreenTestTags.SettingsItem.Subtitle"
     const val SETTINGS_ITEM_ACCOUNT = "Account"
-    const val SETTINGS_ITEM_OPEN_SOURCE = "OpenSource"
     const val SETTINGS_ITEM_LOGS = "Logs"
     const val SETTINGS_ITEM_SYNC = "Sync"
     const val SETTINGS_ITEM_UI = "Ui"

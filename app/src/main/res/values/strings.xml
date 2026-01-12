@@ -140,4 +140,15 @@ other{}
     <string name="label_deleted">Label %1$s deleted</string>
     <string name="edit_label">Edit label</string>
     <string name="labels_description">Organize your bookmarks with labels. Use anything - including emojis!</string>
+
+    <!-- About Screen -->
+    <string name="about">About</string>
+    <string name="about_title">About Readeck App</string>
+    <string name="about_version">Version %1$s</string>
+    <string name="about_description">An Android client for Readeck, a simple web application that lets you save the precious readable content of web pages you like and want to keep forever.</string>
+    <string name="about_credits_title">Credits</string>
+    <string name="about_credits_text">This app is an unofficial client for Readeck. Readeck was created by François Vantomme and is available at codeberg.org/readeck/readeck.</string>
+    <string name="about_license_title">License</string>
+    <string name="about_license_text">Readeck is distributed under the terms of the GNU Affero General Public License v3.0. This ensures the software remains free and open source, with modifications shared under the same license.</string>
+    <string name="about_license_agpl">The Readeck server application is licensed under AGPL v3.0. This Android app is an independent client implementation.</string>
 </resources>

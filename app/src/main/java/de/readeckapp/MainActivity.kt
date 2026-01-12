@@ -25,8 +25,10 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import dagger.hilt.android.AndroidEntryPoint
 import de.readeckapp.domain.model.Theme
+import de.readeckapp.ui.about.AboutScreen
 import de.readeckapp.ui.detail.BookmarkDetailScreen
 import de.readeckapp.ui.list.BookmarkListScreen
+import de.readeckapp.ui.navigation.AboutRoute
 import de.readeckapp.ui.navigation.AccountSettingsRoute
 import de.readeckapp.ui.navigation.BookmarkDetailRoute
 import de.readeckapp.ui.navigation.BookmarkListRoute
@@ -107,6 +109,7 @@ fun ReadeckNavHost(navController: NavHostController) {
     NavHost(navController = navController, startDestination = BookmarkListRoute()) {
         composable<BookmarkListRoute> { BookmarkListScreen(navController) }
         composable<SettingsRoute> { SettingsScreen(navController) }
+        composable<AboutRoute> { AboutScreen(navController) }
         composable<AccountSettingsRoute> { AccountSettingsScreen(navController) }
         composable<BookmarkDetailRoute> { backStackEntry ->
             val route = backStackEntry.toRoute<BookmarkDetailRoute>()
