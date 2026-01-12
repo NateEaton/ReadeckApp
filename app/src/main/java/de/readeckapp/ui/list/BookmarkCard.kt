@@ -5,6 +5,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -22,6 +24,7 @@ import androidx.compose.material.icons.outlined.CheckBoxOutlineBlank
 import androidx.compose.material.icons.outlined.Grade
 import androidx.compose.material.icons.outlined.Inventory2
 import androidx.compose.material.icons.outlined.Share
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
@@ -30,6 +33,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -60,6 +64,7 @@ import de.readeckapp.domain.model.Bookmark
 import de.readeckapp.domain.model.BookmarkListItem
 import de.readeckapp.ui.components.ErrorPlaceholderImage
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun BookmarkCard(
     bookmark: BookmarkListItem,
@@ -69,7 +74,8 @@ fun BookmarkCard(
     onClickFavorite: (String, Boolean) -> Unit,
     onClickShareBookmark: (String) -> Unit,
     onClickArchive: (String, Boolean) -> Unit,
-    onClickOpenUrl: (String) -> Unit
+    onClickOpenUrl: (String) -> Unit,
+    onClickLabel: (String) -> Unit = {}
 ) {
 
     Card(
@@ -139,26 +145,31 @@ fun BookmarkCard(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(top = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.Top
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.ic_label_24px),
-                            contentDescription = "labels"
+                            contentDescription = "labels",
+                            modifier = Modifier.padding(top = 4.dp)
                         )
                         Spacer(Modifier.width(8.dp))
-                        val labels = bookmark.labels.fold("") { acc, label ->
-                            if (acc.isNotEmpty()) {
-                                "$acc, $label"
-                            } else {
-                                label
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            bookmark.labels.forEach { label ->
+                                SuggestionChip(
+                                    onClick = { onClickLabel(label) },
+                                    label = {
+                                        Text(
+                                            text = label,
+                                            style = MaterialTheme.typography.labelMedium
+                                        )
+                                    }
+                                )
                             }
                         }
-                        Text(
-                            text = labels,
-                            style = MaterialTheme.typography.labelLarge,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
                     }
                 }
 

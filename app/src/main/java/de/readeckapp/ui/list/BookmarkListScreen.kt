@@ -646,7 +646,8 @@ fun BookmarkListScreen(navHostController: NavHostController) {
                             onClickFavorite = onClickFavorite,
                             onClickMarkRead = onClickMarkRead,
                             onClickOpenInBrowser = onClickOpenInBrowser,
-                            onClickShareBookmark = onClickShareBookmark
+                            onClickShareBookmark = onClickShareBookmark,
+                            onClickLabel = viewModel::onClickLabel
                         )
                         // Consumes a shareIntent and creates the corresponding share dialog
                         ShareBookmarkChooser(
@@ -929,7 +930,8 @@ fun BookmarkListView(
     onClickFavorite: (String, Boolean) -> Unit,
     onClickArchive: (String, Boolean) -> Unit,
     onClickOpenInBrowser: (String) -> Unit,
-    onClickShareBookmark: (String) -> Unit
+    onClickShareBookmark: (String) -> Unit,
+    onClickLabel: (String) -> Unit = {}
 ) {
     LazyColumn(modifier = modifier) {
         items(bookmarks) { bookmark ->
@@ -941,7 +943,8 @@ fun BookmarkListView(
                 onClickFavorite = onClickFavorite,
                 onClickMarkRead = onClickMarkRead,
                 onClickOpenUrl = onClickOpenInBrowser,
-                onClickShareBookmark = onClickShareBookmark
+                onClickShareBookmark = onClickShareBookmark,
+                onClickLabel = onClickLabel
             )
         }
     }
