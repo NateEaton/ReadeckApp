@@ -45,7 +45,6 @@ class SettingsScreenUnitTest {
                     settingsUiState = SettingsUiState(username = "test"),
                     onClickAccount = {},
                     onClickBack = {},
-                    onClickOpenSourceLibraries = {},
                     onClickLogs = {},
                     onClickSync = {},
                     onClickUi = {}
@@ -64,7 +63,6 @@ class SettingsScreenUnitTest {
                     settingsUiState = SettingsUiState(username = "test"),
                     onClickAccount = {},
                     onClickBack = {},
-                    onClickOpenSourceLibraries = {},
                     onClickLogs = {},
                     onClickSync = {},
                     onClickUi = {}
@@ -86,7 +84,6 @@ class SettingsScreenUnitTest {
                     settingsUiState = SettingsUiState(username = expectedUsername),
                     onClickAccount = {},
                     onClickBack = {},
-                    onClickOpenSourceLibraries = {},
                     onClickLogs = {},
                     onClickSync = {},
                     onClickUi = {}
@@ -114,7 +111,6 @@ class SettingsScreenUnitTest {
                     settingsUiState = SettingsUiState(username = "test"),
                     onClickAccount = { accountClicked = true },
                     onClickBack = {},
-                    onClickOpenSourceLibraries = {},
                     onClickLogs = {},
                     onClickSync = {},
                     onClickUi = {}
@@ -137,7 +133,6 @@ class SettingsScreenUnitTest {
                     settingsUiState = SettingsUiState(username = "test"),
                     onClickAccount = {},
                     onClickBack = {},
-                    onClickOpenSourceLibraries = {},
                     onClickLogs = {},
                     onClickSync = {},
                     onClickUi = {}
@@ -157,7 +152,6 @@ class SettingsScreenUnitTest {
                     settingsUiState = SettingsUiState(username = "test"),
                     onClickAccount = {},
                     onClickBack = { backClicked = true },
-                    onClickOpenSourceLibraries = {},
                     onClickLogs = {},
                     onClickSync = {},
                     onClickUi = {}
@@ -179,7 +173,6 @@ class SettingsScreenUnitTest {
                     settingsUiState = SettingsUiState(username = "test"),
                     onClickAccount = {},
                     onClickBack = {},
-                    onClickOpenSourceLibraries = {},
                     onClickLogs = { logsClicked = true },
                     onClickSync = {},
                     onClickUi = {}
@@ -203,7 +196,6 @@ class SettingsScreenUnitTest {
                     settingsUiState = SettingsUiState(username = "test"),
                     onClickAccount = {},
                     onClickBack = {},
-                    onClickOpenSourceLibraries = {},
                     onClickLogs = {},
                     onClickSync = {},
                     onClickUi = { uiClicked = true}
