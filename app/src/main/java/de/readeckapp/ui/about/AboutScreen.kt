@@ -129,10 +129,29 @@ fun AboutScreenContent(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = stringResource(R.string.about_credits_text),
+                text = stringResource(R.string.about_credits_app_author),
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.fillMaxWidth()
             )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = stringResource(R.string.about_credits_readeck),
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // FORK_INFO_START - Remove this section if merging back to original repo
+            Text(
+                text = stringResource(R.string.about_credits_fork),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.fillMaxWidth()
+            )
+            // FORK_INFO_END
 
             Spacer(modifier = Modifier.height(24.dp))
 
