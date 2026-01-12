@@ -31,6 +31,9 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
+        // Add build timestamp
+        buildConfigField("String", "BUILD_TIME", "\"${System.currentTimeMillis()}\"")
+
         javaCompileOptions {
             annotationProcessorOptions {
                 arguments["room.schemaLocation"] = "$projectDir/schemas".toString()

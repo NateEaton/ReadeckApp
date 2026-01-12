@@ -1,6 +1,9 @@
 package de.readeckapp.ui.about
 
 import android.os.Build
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -180,6 +183,18 @@ fun AboutScreenContent(
                     R.string.about_system_info_version,
                     BuildConfig.VERSION_NAME,
                     BuildConfig.VERSION_CODE
+                ),
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Text(
+                text = stringResource(
+                    R.string.about_system_info_build_time,
+                    SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+                        .format(Date(BuildConfig.BUILD_TIME.toLong()))
                 ),
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.fillMaxWidth()
