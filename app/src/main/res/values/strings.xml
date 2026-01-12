@@ -150,7 +150,15 @@ other{}
     <string name="about_credits_app_author">This Android app was built by @jensomato.</string>
     <string name="about_credits_readeck">Readeck was created by François Vantomme and is available at codeberg.org/readeck/readeck.</string>
     <string name="about_credits_fork">This is a fork of the original ReadeckApp repository with enhancements.</string>
+    <string name="about_system_info_title">System Info</string>
+    <string name="about_system_info_version">App Version: %1$s (%2$d)</string>
+    <string name="about_system_info_android">Android Version: %1$s (API %2$d)</string>
+    <string name="about_system_info_device">Device: %1$s %2$s</string>
+    <string name="about_project_title">Project</string>
+    <string name="about_project_this_repo">This Fork (NateEaton/ReadeckApp)</string>
+    <string name="about_project_original_repo">Original App (@jensomato)</string>
+    <string name="about_project_readeck_repo">Readeck Server (codeberg.org)</string>
     <string name="about_license_title">License</string>
-    <string name="about_license_text">Readeck is distributed under the terms of the GNU Affero General Public License v3.0. This ensures the software remains free and open source, with modifications shared under the same license.</string>
-    <string name="about_license_agpl">The Readeck server application is licensed under AGPL v3.0. This Android app is an independent client implementation.</string>
+    <string name="about_license_text">This Android app is licensed under the GNU General Public License v3.0. This ensures the software remains free and open source, with modifications shared under the same license.</string>
+    <string name="about_license_readeck">The Readeck server application is licensed under GNU Affero General Public License v3.0.</string>
 </resources>

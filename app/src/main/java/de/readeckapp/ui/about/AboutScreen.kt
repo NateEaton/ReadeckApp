@@ -1,5 +1,6 @@
 package de.readeckapp.ui.about
 
+import android.os.Build
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -11,6 +12,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -25,6 +27,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -33,6 +36,7 @@ import androidx.navigation.NavHostController
 import de.readeckapp.BuildConfig
 import de.readeckapp.R
 import de.readeckapp.ui.navigation.OpenSourceLibrariesRoute
+import de.readeckapp.util.openUrlInCustomTab
 
 @Composable
 fun AboutScreen(navHostController: NavHostController) {
@@ -53,9 +57,11 @@ fun AboutScreen(navHostController: NavHostController) {
         }
     }
 
+    val context = LocalContext.current
     AboutScreenContent(
         onBackClick = { viewModel.onClickBack() },
-        onOpenSourceLibrariesClick = { viewModel.onClickOpenSourceLibraries() }
+        onOpenSourceLibrariesClick = { viewModel.onClickOpenSourceLibraries() },
+        onUrlClick = { url -> openUrlInCustomTab(context, url) }
     )
 }
 
@@ -63,7 +69,8 @@ fun AboutScreen(navHostController: NavHostController) {
 @Composable
 fun AboutScreenContent(
     onBackClick: () -> Unit,
-    onOpenSourceLibrariesClick: () -> Unit
+    onOpenSourceLibrariesClick: () -> Unit,
+    onUrlClick: (String) -> Unit
 ) {
     Scaffold(
         topBar = {
@@ -159,6 +166,126 @@ fun AboutScreenContent(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // System Info Section
+            Text(
+                text = stringResource(R.string.about_system_info_title),
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = stringResource(
+                    R.string.about_system_info_version,
+                    BuildConfig.VERSION_NAME,
+                    BuildConfig.VERSION_CODE
+                ),
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Text(
+                text = stringResource(
+                    R.string.about_system_info_android,
+                    Build.VERSION.RELEASE,
+                    Build.VERSION.SDK_INT
+                ),
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Text(
+                text = stringResource(
+                    R.string.about_system_info_device,
+                    Build.MANUFACTURER,
+                    Build.MODEL
+                ),
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            HorizontalDivider()
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Project Section
+            Text(
+                text = stringResource(R.string.about_project_title),
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // FORK_INFO_START - Remove this link if merging back to original repo
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onUrlClick("https://github.com/NateEaton/ReadeckApp") }
+                    .padding(vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(
+                    Icons.Filled.Link,
+                    contentDescription = null,
+                    modifier = Modifier.padding(end = 16.dp)
+                )
+                Text(
+                    text = stringResource(R.string.about_project_this_repo),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+            // FORK_INFO_END
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onUrlClick("https://github.com/jensomato/ReadeckApp") }
+                    .padding(vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(
+                    Icons.Filled.Link,
+                    contentDescription = null,
+                    modifier = Modifier.padding(end = 16.dp)
+                )
+                Text(
+                    text = stringResource(R.string.about_project_original_repo),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onUrlClick("https://codeberg.org/readeck/readeck") }
+                    .padding(vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(
+                    Icons.Filled.Link,
+                    contentDescription = null,
+                    modifier = Modifier.padding(end = 16.dp)
+                )
+                Text(
+                    text = stringResource(R.string.about_project_readeck_repo),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            HorizontalDivider()
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             // License Section
             Text(
                 text = stringResource(R.string.about_license_title),
@@ -177,7 +304,7 @@ fun AboutScreenContent(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = stringResource(R.string.about_license_agpl),
+                text = stringResource(R.string.about_license_readeck),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.fillMaxWidth()
