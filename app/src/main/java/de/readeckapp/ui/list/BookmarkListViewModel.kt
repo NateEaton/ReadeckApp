@@ -18,6 +18,7 @@ import de.readeckapp.domain.usecase.UpdateBookmarkUseCase
 import de.readeckapp.io.prefs.SettingsDataStore
 import de.readeckapp.util.extractUrlAndTitle
 import de.readeckapp.util.isValidUrl
+import de.readeckapp.util.parseSearchQuery
 import de.readeckapp.worker.LoadBookmarksWorker
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -125,13 +126,25 @@ class BookmarkListViewModel @Inject constructor(
                     // Debounce search queries with delay inside flow builder
                     flow {
                         delay(300)
+                        // Parse search operators from query
+                        val searchOps = parseSearchQuery(query)
+
+                        // Determine if we're looking for "empty" bookmarks (hasArticle but no content)
+                        val requiresArticle = query.contains("is:empty", ignoreCase = true)
+
+                        // Determine the state to filter on
+                        // If a state operator is specified, use it; otherwise use LOADED as default
+                        val searchState = searchOps.state ?: Bookmark.State.LOADED
+
                         emitAll(bookmarkRepository.searchBookmarkListItems(
-                            searchQuery = query,
+                            searchQuery = searchOps.textQuery,
                             type = currentFilter.type,
                             unread = currentFilter.unread,
                             archived = currentFilter.archived,
                             favorite = currentFilter.favorite,
-                            state = Bookmark.State.LOADED
+                            state = searchState,
+                            hasArticleContent = searchOps.hasArticleContent,
+                            requiresArticle = requiresArticle
                         ))
                     }
                 }
