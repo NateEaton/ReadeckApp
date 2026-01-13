@@ -306,6 +306,11 @@ class BookmarkListViewModel @Inject constructor(
         _navigationEvent.update { NavigationEvent.NavigateToSettings }
     }
 
+    fun onClickAbout() {
+        Timber.d("onClickAbout")
+        _navigationEvent.update { NavigationEvent.NavigateToAbout }
+    }
+
     fun onSearchQueryChange(query: String) {
         _searchQuery.value = query
     }
@@ -499,6 +504,7 @@ class BookmarkListViewModel @Inject constructor(
 
     sealed class NavigationEvent {
         data object NavigateToSettings : NavigationEvent()
+        data object NavigateToAbout : NavigationEvent()
         data class NavigateToBookmarkDetail(val bookmarkId: String) : NavigationEvent()
     }
 

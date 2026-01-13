@@ -31,6 +31,7 @@ import androidx.compose.material.icons.outlined.Bookmarks
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.Favorite
 import androidx.compose.material.icons.outlined.Image
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Inventory2
 import androidx.compose.material.icons.outlined.Label
 import androidx.compose.material.icons.outlined.Movie
@@ -94,6 +95,7 @@ import de.readeckapp.R
 import de.readeckapp.domain.model.Bookmark
 import de.readeckapp.domain.model.BookmarkListItem
 import de.readeckapp.ui.components.ShareBookmarkChooser
+import de.readeckapp.ui.navigation.AboutRoute
 import de.readeckapp.ui.navigation.BookmarkDetailRoute
 import de.readeckapp.ui.navigation.SettingsRoute
 import de.readeckapp.util.openUrlInCustomTab
@@ -144,6 +146,7 @@ fun BookmarkListScreen(navHostController: NavHostController) {
         viewModel.onClickLabel(label)
     }
     val onClickSettings: () -> Unit = { viewModel.onClickSettings() }
+    val onClickAbout: () -> Unit = { viewModel.onClickAbout() }
     val onClickBookmark: (String) -> Unit = { bookmarkId -> viewModel.onClickBookmark(bookmarkId) }
     val onClickDelete: (String) -> Unit = { bookmarkId ->
         viewModel.onDeleteBookmark(bookmarkId)
@@ -169,6 +172,11 @@ fun BookmarkListScreen(navHostController: NavHostController) {
             when (event) {
                 is BookmarkListViewModel.NavigationEvent.NavigateToSettings -> {
                     navHostController.navigate(SettingsRoute)
+                    scope.launch { drawerState.close() }
+                }
+
+                is BookmarkListViewModel.NavigationEvent.NavigateToAbout -> {
+                    navHostController.navigate(AboutRoute)
                     scope.launch { drawerState.close() }
                 }
 
@@ -387,6 +395,18 @@ fun BookmarkListScreen(navHostController: NavHostController) {
                         }
                     )
                     HorizontalDivider()
+                    NavigationDrawerItem(
+                        label = { Text(
+                            style = Typography.labelLarge,
+                            text = stringResource(id = R.string.about)
+                        ) },
+                        icon = { Icon(Icons.Outlined.Info, contentDescription = null) },
+                        selected = false,
+                        onClick = {
+                            onClickAbout()
+                            scope.launch { drawerState.close() }
+                        }
+                    )
                     NavigationDrawerItem(
                         label = { Text(
                             style = Typography.labelLarge,

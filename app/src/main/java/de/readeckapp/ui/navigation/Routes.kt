@@ -15,6 +15,9 @@ object AccountSettingsRoute
 object SettingsRoute
 
 @Serializable
+object AboutRoute
+
+@Serializable
 object OpenSourceLibrariesRoute
 
 @Serializable
