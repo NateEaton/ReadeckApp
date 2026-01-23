@@ -207,60 +207,84 @@ interface BookmarkDao {
         isUnread: Boolean? = null,
         isArchived: Boolean? = null,
         isFavorite: Boolean? = null,
-        state: BookmarkEntity.State? = null
+        state: BookmarkEntity.State? = null,
+        hasArticleContent: Boolean? = null,
+        requiresArticle: Boolean = false
     ): Flow<List<BookmarkListItemEntity>> {
         val args = mutableListOf<Any>()
         val sqlQuery = buildString {
             append("""SELECT
-            id,
-            url,
-            title,
-            siteName,
-            isMarked,
-            isArchived,
-            readProgress,
-            icon_src AS iconSrc,
-            image_src AS imageSrc,
-            labels,
-            thumbnail_src AS thumbnailSrc,
-            type
+            b.id,
+            b.url,
+            b.title,
+            b.siteName,
+            b.isMarked,
+            b.isArchived,
+            b.readProgress,
+            b.icon_src AS iconSrc,
+            b.image_src AS imageSrc,
+            b.labels,
+            b.thumbnail_src AS thumbnailSrc,
+            b.type
             """)
 
-            append(" FROM bookmarks WHERE 1=1")
+            append(" FROM bookmarks b")
 
-            // Add search condition for title and labels
-            append(" AND (title LIKE ? COLLATE NOCASE OR labels LIKE ? COLLATE NOCASE OR siteName LIKE ? COLLATE NOCASE)")
-            val searchPattern = "%$searchQuery%"
-            args.add(searchPattern)
-            args.add(searchPattern)
-            args.add(searchPattern)
+            // LEFT JOIN with article_content to check for content existence
+            append(" LEFT JOIN article_content ac ON b.id = ac.bookmarkId")
+
+            append(" WHERE 1=1")
+
+            // Add search condition for title and labels - only if searchQuery is not blank
+            if (searchQuery.isNotBlank()) {
+                append(" AND (b.title LIKE ? COLLATE NOCASE OR b.labels LIKE ? COLLATE NOCASE OR b.siteName LIKE ? COLLATE NOCASE)")
+                val searchPattern = "%$searchQuery%"
+                args.add(searchPattern)
+                args.add(searchPattern)
+                args.add(searchPattern)
+            }
 
             state?.let {
-                append(" AND state = ?")
+                append(" AND b.state = ?")
                 args.add(it.value)
             }
 
             type?.let {
-                append(" AND type = ?")
+                append(" AND b.type = ?")
                 args.add(it.value)
             }
 
             if (isUnread == true) {
-                append(" AND readProgress < 100")
+                append(" AND b.readProgress < 100")
             } else if (isUnread == false) {
-                append(" AND readProgress = 100")
+                append(" AND b.readProgress = 100")
             }
 
             isArchived?.let {
-                append(" AND isArchived = ?")
+                append(" AND b.isArchived = ?")
                 args.add(it)
             }
 
             isFavorite?.let {
-                append(" AND isMarked = ?")
+                append(" AND b.isMarked = ?")
                 args.add(it)
             }
-            append(" ORDER BY created DESC")
+
+            // Handle article content filtering
+            when {
+                // Special case for is:empty - bookmarks that should have content but don't
+                requiresArticle -> {
+                    append(" AND b.hasArticle = 1 AND (ac.content IS NULL OR ac.content = '')")
+                }
+                hasArticleContent == true -> {
+                    append(" AND ac.content IS NOT NULL AND ac.content != ''")
+                }
+                hasArticleContent == false -> {
+                    append(" AND (ac.content IS NULL OR ac.content = '')")
+                }
+            }
+
+            append(" ORDER BY b.created DESC")
         }.let { SimpleSQLiteQuery(it, args.toTypedArray()) }
         Timber.d("searchQuery=${sqlQuery.sql}")
         return getBookmarkListItemsByFiltersDynamic(sqlQuery)

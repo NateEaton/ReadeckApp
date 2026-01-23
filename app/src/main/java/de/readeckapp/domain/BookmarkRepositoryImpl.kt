@@ -117,7 +117,9 @@ class BookmarkRepositoryImpl @Inject constructor(
         unread: Boolean?,
         archived: Boolean?,
         favorite: Boolean?,
-        state: Bookmark.State?
+        state: Bookmark.State?,
+        hasArticleContent: Boolean?,
+        requiresArticle: Boolean
     ): Flow<List<BookmarkListItem>> {
         return bookmarkDao.searchBookmarkListItems(
             searchQuery = searchQuery,
@@ -137,7 +139,9 @@ class BookmarkRepositoryImpl @Inject constructor(
                     Bookmark.State.ERROR -> BookmarkEntity.State.ERROR
                     Bookmark.State.LOADING -> BookmarkEntity.State.LOADING
                 }
-            }
+            },
+            hasArticleContent = hasArticleContent,
+            requiresArticle = requiresArticle
         ).map { listItems ->
             listItems.map { listItem ->
                 BookmarkListItem(

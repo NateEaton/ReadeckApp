@@ -29,7 +29,9 @@ interface BookmarkRepository {
         unread: Boolean? = null,
         archived: Boolean? = null,
         favorite: Boolean? = null,
-        state: Bookmark.State? = null
+        state: Bookmark.State? = null,
+        hasArticleContent: Boolean? = null,
+        requiresArticle: Boolean = false
     ): Flow<List<BookmarkListItem>>
 
     suspend fun insertBookmarks(bookmarks: List<Bookmark>)
